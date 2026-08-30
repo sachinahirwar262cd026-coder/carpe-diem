@@ -36,5 +36,4 @@ const predictPollution = asyncHandler(async (req, res) => {
   });
 });
 export { predictPollution };
-// export default { predictPollution };
 

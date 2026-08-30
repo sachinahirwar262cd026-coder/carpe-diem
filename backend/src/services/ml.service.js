@@ -7,7 +7,6 @@
 // Using global fetch (Node 18+). If on an older Node version, install axios instead.
 
 const POLLUTION_MODEL_URL = process.env.POLLUTION_MODEL_URL;
-const NOISE_COMPLAINT_MODEL_URL = process.env.NOISE_COMPLAINT_MODEL_URL;
 
 /**
  * Fetches current + forecasted AQI and noise data for a given lat/lng from the ML model service.
@@ -34,41 +33,4 @@ const getPollutionPrediction = async (latitude, longitude) => {
   return response.json();
 };
 
-// src/services/mlService.js - add alongside getPollutionPrediction
-const getNoisePrediction = async (latitude, longitude) => {
-  const response = await fetch(process.env.NOISE_FORECAST_MODEL_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ lat: latitude, lon: longitude }),
-  });
-  if (!response.ok) throw new Error(`Noise model request failed (${response.status})`);
-  return response.json();
-};
-
-/**
- * Forwards a noise complaint's spectrogram image URL + location to the noise classification model.
- * Since the image now lives on Cloudinary, we just send the URL - the model server fetches it itself.
- * @param {string} imageUrl - Cloudinary secure URL of the spectrogram image
- * @param {{latitude: number, longitude: number}} location
- * @returns {Promise<Object>} raw model response
- */
-const getNoiseComplaintAnalysis = async (imageUrl, location) => {
-  const response = await fetch(NOISE_COMPLAINT_MODEL_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      imageUrl,
-      latitude: location.latitude,
-      longitude: location.longitude,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Noise complaint model request failed (${response.status}): ${errorText}`);
-  }
-
-  return response.json();
-};
-export { getPollutionPrediction, getNoiseComplaintAnalysis, getNoisePrediction };
-// export default { getPollutionPrediction, getNoiseComplaintAnalysis, getNoisePrediction };
+export { getPollutionPrediction };

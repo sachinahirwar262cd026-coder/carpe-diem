@@ -1,17 +1,17 @@
 import Complaint from "../models/complaint.model.js"
-import asyncHandler from "../utils/asyncHandler.util.js"
+import asyncHandler from "../utils/asynchandlers.util.js"
 import uploadBufferToCloudinary from "../utils/uploadBuffer.util.js"
-import getNoiseComplaintAnalysis from "../services/ml.service.js"
+// import getNoiseComplaintAnalysis from "../services/ml.service.js"
 
 const createComplaint = asyncHandler(async (req, res) => {
-  const { latitude, longitude } = req.body;
+  const { latitude, longitude } = req.body || {};
 
   if (!req.file) {
-    return res.status(400).json({ success: false, message: "Spectrogram image is required" });
+    return res.status(400).json({ success: false, message: "Spectrogram image is required (key: 'spectrogram')" });
   }
 
   if (!latitude || !longitude) {
-    return res.status(400).json({ success: false, message: "latitude and longitude are required" });
+    return res.status(400).json({ success: false, message: "latitude and longitude form fields are required" });
   }
 
   const location = {
@@ -38,17 +38,17 @@ const createComplaint = asyncHandler(async (req, res) => {
     spectrogramPublicId: publicId,
   });
 
-  try {
-    // Forward just the image URL + location to the noise classification model
-    const modelResponse = await getNoiseComplaintAnalysis(secureUrl, location);
+//   try {
+//     // Forward just the image URL + location to the noise classification model
+//     const modelResponse = await getNoiseComplaintAnalysis(secureUrl, location);
 
-    complaint.modelResponse = modelResponse;
-    complaint.status = "forwarded";
-    await complaint.save();
-  } catch (error) {
-    // Complaint (and its Cloudinary URL) is still saved even if the model call fails - can retry later
-    console.error("Failed to forward complaint to noise model:", error.message);
-  }
+//     complaint.modelResponse = modelResponse;
+//     complaint.status = "forwarded";
+//     await complaint.save();
+//   } catch (error) {
+//     // Complaint (and its Cloudinary URL) is still saved even if the model call fails - can retry later
+//     console.error("Failed to forward complaint to noise model:", error.message);
+//   }
 
   res.status(201).json({
     success: true,
@@ -64,5 +64,46 @@ const getMyComplaints = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: { complaints } });
 });
 
-export { createComplaint, getMyComplaints };
-// export default { createComplaint, getMyComplaints };
+// @route   PATCH /api/complaints/:id/status
+// @access  Private
+const updateComplaintStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { status, resolvedAt } = req.body || {};
+
+  const allowedStatuses = ["pending", "resolved"];
+  if (!status || !allowedStatuses.includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: `Status is required and must be one of: ${allowedStatuses.join(", ")}`,
+    });
+  }
+
+  const updateFields = { status };
+
+  if (status === "resolved") {
+    updateFields.resolvedAt = resolvedAt ? new Date(resolvedAt) : new Date();
+  } else if (status === "pending") {
+    updateFields.resolvedAt = null;
+  }
+
+  const complaint = await Complaint.findByIdAndUpdate(
+    id,
+    { $set: updateFields },
+    { returnDocument: "after", runValidators: true }
+  );
+
+  if (!complaint) {
+    return res.status(404).json({
+      success: false,
+      message: "Complaint not found",
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Complaint status updated successfully",
+    data: { complaint },
+  });
+});
+
+export { createComplaint, getMyComplaints, updateComplaintStatus };
