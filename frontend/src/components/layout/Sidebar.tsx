@@ -5,7 +5,6 @@ import {
   Volume2,
   MapPin,
   FileWarning,
-  BarChart3,
   Sparkles,
   Wind,
   X,
@@ -19,10 +18,11 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { complaints } = useApp();
+  const activeComplaintsCount = complaints.filter((c) => c.status !== 'Resolved').length;
 
   const navItems = [
     {
-      name: 'Dashboard & Air Forecast',
+      name: 'Dashboard & Analytics',
       path: '/',
       icon: LayoutDashboard,
       badge: 'Live',
@@ -43,18 +43,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       badgeColor: '',
     },
     {
-      name: 'Citizen Grievances',
+      name: 'Citizen Noise Grievances',
       path: '/complaints',
       icon: FileWarning,
-      badge: complaints.length > 0 ? `${complaints.length}` : null,
+      badge: activeComplaintsCount > 0 ? `${activeComplaintsCount} Active` : 'All Clear',
       badgeColor: 'bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30',
-    },
-    {
-      name: 'Analytics & Models',
-      path: '/analytics',
-      icon: BarChart3,
-      badge: 'Bi-LSTM',
-      badgeColor: 'bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-500/30',
     },
     {
       name: 'AI Municipal Reports',

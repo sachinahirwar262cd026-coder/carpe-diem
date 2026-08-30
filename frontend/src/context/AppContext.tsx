@@ -21,6 +21,7 @@ interface AppContextType {
   setUserGpsLocation: (loc: UserGpsInfo | null) => void;
   complaints: CitizenComplaint[];
   addComplaint: (newComplaint: Omit<CitizenComplaint, 'id' | 'trackingNumber' | 'timestamp' | 'status' | 'citizenCredibility'>) => CitizenComplaint;
+  resolveComplaint: (id: string) => void;
   noiseHotspots: NoiseHotspot[];
   liveUpdatesEnabled: boolean;
   setLiveUpdatesEnabled: React.Dispatch<React.SetStateAction<boolean>>;
@@ -131,6 +132,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return newComplaint;
   };
 
+  const resolveComplaint = (id: string) => {
+    setComplaints((prev) => {
+      const updated = prev.map((c) =>
+        c.id === id ? { ...c, status: 'Resolved' as const, actionTaken: 'Resolved by Citizen' } : c
+      );
+      try {
+        localStorage.setItem('citizen_complaints', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
   const dismissAlert = (id: string) => {
     setDismissedAlerts((prev) => [...prev, id]);
   };
@@ -154,6 +167,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setUserGpsLocation,
         complaints,
         addComplaint,
+        resolveComplaint,
         noiseHotspots,
         liveUpdatesEnabled,
         setLiveUpdatesEnabled,

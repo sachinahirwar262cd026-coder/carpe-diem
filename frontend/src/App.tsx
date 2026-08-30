@@ -12,7 +12,6 @@ import { NoiseEvidencePage } from './pages/citizen/NoiseEvidencePage';
 import { NoiseMonitoringPage } from './pages/NoiseMonitoringPage';
 import { HotspotMapPage } from './pages/HotspotMapPage';
 import { SubmitComplaintPage } from './pages/SubmitComplaintPage';
-import { AnalyticsPage } from './pages/AnalyticsPage';
 import { AiReportsPage } from './pages/AiReportsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -35,18 +34,18 @@ export const App: React.FC = () => {
                 </ProtectedRoute>
               }
             >
-              {/* Unified Dashboard & Air Forecast */}
+              {/* Unified Dashboard (Air Quality, Forecast & Analytics) */}
               <Route index element={<DashboardPage />} />
               <Route path="air-quality" element={<Navigate to="/" replace />} />
+              <Route path="analytics" element={<Navigate to="/" replace />} />
 
               {/* Core Modules */}
               <Route path="noise-monitoring" element={<NoiseMonitoringPage />} />
               <Route path="hotspots" element={<HotspotMapPage />} />
               <Route path="complaints" element={<SubmitComplaintPage />} />
-              <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="reports" element={<AiReportsPage />} />
 
-              {/* Evidence Submission Sub-Routes */}
+              {/* Sub-Routes */}
               <Route path="citizen/air-evidence" element={<AirEvidencePage />} />
               <Route path="citizen/noise-evidence" element={<NoiseEvidencePage />} />
 
