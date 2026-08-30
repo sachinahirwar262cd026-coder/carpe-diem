@@ -1,8 +1,8 @@
 {
-  "model_name": "Hybrid Attention Bi-LSTM + LightGBM Ensemble v3.0",
+  "model_name": "PranaAI Comprehensive Hybrid Ensemble v3.0",
   "version": "3.0.0",
-  "training_date": "2026-08-30 01:14:27",
-  "data_source": "Open-Meteo Real Historical + Indian Event Augmentation",
+  "training_date": "2026-08-30 01:33:07",
+  "data_source": "OpenWeatherMap + Open-Meteo Real Historical + Indian Event Augmentation",
   "cities_trained": [
     "Delhi",
     "Noida",
@@ -33,9 +33,9 @@
     "Dehradun",
     "Gurugram"
   ],
-  "real_records": 388416,
+  "real_records": 382176,
   "augmentation_records": 6799,
-  "total_windows": 193369,
+  "total_windows": 190249,
   "date_coverage": "2023-01-01 to 2024-07-31",
   "scaler": "RobustScaler (quantile_range=5-95%)",
   "input_window_hours": 48,
@@ -53,14 +53,14 @@
   ],
   "evaluation_metrics": {
     "pm2_5": {
-      "rmse": 12.12,
-      "mae": 7.95,
-      "r2": 0.8528
+      "rmse": 46.1,
+      "mae": 25.08,
+      "r2": 0.8134
     },
     "pm10": {
-      "rmse": 27.28,
-      "mae": 15.44,
-      "r2": 0.8146
+      "rmse": 102.57,
+      "mae": 30.91,
+      "r2": 0.5482
     }
   },
   "cpcb_standard_compliant": true

@@ -19,7 +19,7 @@ import tensorflow as tf
 from tensorflow.keras import layers, models, regularizers
 
 
-@tf.keras.utils.register_keras_serializable(package="AirQualityForecast")
+@tf.keras.utils.register_keras_serializable(package="PranaAI")
 class TemporalAttention(layers.Layer):
     """
     Bahdanau-style Additive Temporal Attention mechanism.
@@ -72,7 +72,7 @@ def build_attention_bilstm_model(n_past: int = 48, n_future: int = 24, n_feature
     dense_out = layers.TimeDistributed(layers.Dense(32, activation="relu"))(decoded)
     outputs = layers.TimeDistributed(layers.Dense(n_features), name="forecast_output")(dense_out)
     
-    model = models.Model(inputs=inputs, outputs=outputs, name="Attention_BiLSTM_Forecaster")
+    model = models.Model(inputs=inputs, outputs=outputs, name="PranaAI_Attention_BiLSTM")
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), loss="huber", metrics=["mae"])
     return model
 
