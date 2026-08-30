@@ -1,0 +1,67 @@
+{
+  "model_name": "Hybrid Attention Bi-LSTM + LightGBM Ensemble v3.0",
+  "version": "3.0.0",
+  "training_date": "2026-08-30 01:14:27",
+  "data_source": "Open-Meteo Real Historical + Indian Event Augmentation",
+  "cities_trained": [
+    "Delhi",
+    "Noida",
+    "Kanpur",
+    "Lucknow",
+    "Patna",
+    "Varanasi",
+    "Agra",
+    "Ludhiana",
+    "Kolkata",
+    "Bhubaneswar",
+    "Ranchi",
+    "Guwahati",
+    "Mumbai",
+    "Pune",
+    "Ahmedabad",
+    "Surat",
+    "Bengaluru",
+    "Chennai",
+    "Hyderabad",
+    "Kochi",
+    "Visakhapatnam",
+    "Bhopal",
+    "Indore",
+    "Nagpur",
+    "Jaipur",
+    "Chandigarh",
+    "Dehradun",
+    "Gurugram"
+  ],
+  "real_records": 388416,
+  "augmentation_records": 6799,
+  "total_windows": 193369,
+  "date_coverage": "2023-01-01 to 2024-07-31",
+  "scaler": "RobustScaler (quantile_range=5-95%)",
+  "input_window_hours": 48,
+  "forecast_horizon_hours": 24,
+  "features": [
+    "aqi",
+    "co",
+    "no",
+    "no2",
+    "o3",
+    "so2",
+    "pm2_5",
+    "pm10",
+    "nh3"
+  ],
+  "evaluation_metrics": {
+    "pm2_5": {
+      "rmse": 12.12,
+      "mae": 7.95,
+      "r2": 0.8528
+    },
+    "pm10": {
+      "rmse": 27.28,
+      "mae": 15.44,
+      "r2": 0.8146
+    }
+  },
+  "cpcb_standard_compliant": true
+}
