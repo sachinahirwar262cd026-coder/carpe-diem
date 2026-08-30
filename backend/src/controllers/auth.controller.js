@@ -77,8 +77,15 @@ const login = asyncHandler(async (req, res) => {
 
 
 // @route   POST /api/auth/logout
-// @access  Public / Protected
+// @access  Private (Protected)
 const logout = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: "You are not logged in",
+    });
+  }
+
   res.clearCookie("token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -91,4 +98,19 @@ const logout = asyncHandler(async (req, res) => {
   });
 });
 
-export { signup, login, logout };
+
+
+// @route   GET /api/auth/me
+// @access  Private
+const getProfile = asyncHandler(async (req, res) => {
+  res.status(200).json({
+    success: true,
+    data: {
+      user: req.user,
+    },
+  });
+});
+
+export { signup, login, logout, getProfile };
+
+
