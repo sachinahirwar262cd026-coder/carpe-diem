@@ -103,6 +103,12 @@ async def noise_city_corridors(request: Request):
     return await _proxy("GET", "/api/noise/city-corridors", request)
 
 
+@app.get("/api/noise/live-telemetry")
+async def noise_live_telemetry(request: Request):
+    return await _proxy("GET", "/api/noise/live-telemetry", request)
+
+
+
 @app.get("/")
 async def root():
     return {

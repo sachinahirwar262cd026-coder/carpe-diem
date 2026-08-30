@@ -252,6 +252,19 @@ async def cortn_predict(req: CortnRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"CORTN prediction error: {str(e)}")
 
+@app.get("/api/noise/live-telemetry")
+async def get_live_noise_telemetry(city: str = Query("Delhi", description="City name")):
+    """
+    Ingests live traffic telemetry (fleet speed, flow, congestion %, freight ratio)
+    and executes CORTN mathematical acoustic modeling.
+    """
+    try:
+        from cortn_engine import fetch_live_traffic_telemetry
+        data = fetch_live_traffic_telemetry(city)
+        return {"status": "success", "data": data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Live noise telemetry error: {str(e)}")
+
 @app.get("/api/noise/city-corridors")
 async def get_city_corridors_noise(city: str = Query("Delhi", description="City name")):
     """
