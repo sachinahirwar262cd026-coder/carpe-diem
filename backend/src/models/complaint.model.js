@@ -32,9 +32,17 @@ const complaintSchema = new mongoose.Schema(
       type: Number,
       default: null,
     },
-    noiseSourceType: {
+    title: {
       type: String,
-      default: null,
+      required: [true, "Complaint title is required"],
+      trim: true,
+      maxlength: 100,
+    },
+    description: {
+      type: String,
+      required: [true, "Complaint description is required"],
+      trim: true,
+      maxlength: 1000,
     },
     resolvedAt: {
       type: Date,

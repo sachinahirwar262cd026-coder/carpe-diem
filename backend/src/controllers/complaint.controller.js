@@ -4,7 +4,7 @@ import uploadBufferToCloudinary from "../utils/uploadBuffer.util.js"
 // import getNoiseComplaintAnalysis from "../services/ml.service.js"
 
 const createComplaint = asyncHandler(async (req, res) => {
-  const { latitude, longitude } = req.body || {};
+  const { latitude, longitude, title, description } = req.body || {};
 
   if (!req.file) {
     return res.status(400).json({ success: false, message: "Spectrogram image is required (key: 'spectrogram')" });
@@ -12,6 +12,10 @@ const createComplaint = asyncHandler(async (req, res) => {
 
   if (!latitude || !longitude) {
     return res.status(400).json({ success: false, message: "latitude and longitude form fields are required" });
+  }
+
+  if (!title || !description) {
+    return res.status(400).json({ success: false, message: "title and description are required" });
   }
 
   const location = {
@@ -36,19 +40,9 @@ const createComplaint = asyncHandler(async (req, res) => {
     location,
     spectrogramImageUrl: secureUrl,
     spectrogramPublicId: publicId,
+    title,
+    description,
   });
-
-//   try {
-//     // Forward just the image URL + location to the noise classification model
-//     const modelResponse = await getNoiseComplaintAnalysis(secureUrl, location);
-
-//     complaint.modelResponse = modelResponse;
-//     complaint.status = "forwarded";
-//     await complaint.save();
-//   } catch (error) {
-//     // Complaint (and its Cloudinary URL) is still saved even if the model call fails - can retry later
-//     console.error("Failed to forward complaint to noise model:", error.message);
-//   }
 
   res.status(201).json({
     success: true,
