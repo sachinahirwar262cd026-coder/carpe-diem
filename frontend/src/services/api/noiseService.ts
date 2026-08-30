@@ -5,6 +5,37 @@
 
 const BASE = '/api';
 
+export interface SoundClassificationResult {
+  status: 'success';
+  model_loaded: true;
+  main_category: string;
+  sub_label: string;
+  confidence: number;
+  all_scores: Record<string, number>;
+  category_scores: Record<string, number>;
+  error: null;
+}
+
+/**
+ * Sends a PNG/JPEG/WebP spectrogram to the saved MobileNetV2 classifier.
+ * The Vite `/api` proxy forwards this request through the API gateway.
+ */
+export async function classifySpectrogram(file: Blob, filename = 'spectrogram.png'): Promise<SoundClassificationResult> {
+  const formData = new FormData();
+  formData.append('file', file, filename);
+
+  const response = await fetch(`${BASE}/noise/classify-sound`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(payload?.detail || `Sound classification failed (HTTP ${response.status}).`);
+  }
+  return payload as SoundClassificationResult;
+}
+
 export interface CortnInputParams {
   vehicles_per_hour: number;
   mean_speed_kmph: number;

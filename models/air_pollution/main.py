@@ -313,6 +313,7 @@ async def classify_sound(
       jackhammer, glass_breaking, fireworks … (Construction)
     """
     allowed_types = {"image/png", "image/jpeg", "image/jpg", "image/webp"}
+    max_file_size = 10 * 1024 * 1024  # 10 MiB
     if file.content_type and file.content_type not in allowed_types:
         raise HTTPException(
             status_code=415,
@@ -322,8 +323,12 @@ async def classify_sound(
     image_bytes = await file.read()
     if len(image_bytes) == 0:
         raise HTTPException(status_code=400, detail="Empty file received.")
+    if len(image_bytes) > max_file_size:
+        raise HTTPException(status_code=413, detail="Spectrogram must be 10 MiB or smaller.")
 
     result = cnn_predict(image_bytes)
+    if result["status"] == "error":
+        raise HTTPException(status_code=500, detail=result["error"])
     return result
 
 

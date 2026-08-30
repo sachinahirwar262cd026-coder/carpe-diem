@@ -2,7 +2,6 @@ import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import {
   LayoutDashboard,
-  Volume2,
   MapPin,
   FileWarning,
   Sparkles,
@@ -27,13 +26,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       icon: LayoutDashboard,
       badge: 'Live',
       badgeColor: 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30',
-    },
-    {
-      name: 'Noise Surveillance',
-      path: '/noise-monitoring',
-      icon: Volume2,
-      badge: 'CORTN',
-      badgeColor: 'bg-blue-50 dark:bg-cyan-500/20 text-blue-700 dark:text-cyan-300 border-blue-200 dark:border-cyan-500/30',
     },
     {
       name: 'Hotspot Cluster Map',
@@ -70,9 +62,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed top-0 bottom-0 left-0 z-50 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         {/* Brand Header */}
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
@@ -115,10 +106,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               onClick={onClose}
               end={item.path === '/'}
               className={({ isActive }) =>
-                `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
-                  isActive
-                    ? 'bg-emerald-50 dark:bg-teal-500/15 text-emerald-700 dark:text-teal-300 border border-emerald-200 dark:border-teal-500/30 font-bold'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-transparent'
+                `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${isActive
+                  ? 'bg-emerald-50 dark:bg-teal-500/15 text-emerald-700 dark:text-teal-300 border border-emerald-200 dark:border-teal-500/30 font-bold'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-transparent'
                 }`
               }
             >
@@ -128,9 +118,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               </div>
               {item.badge && (
                 <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                    item.badgeColor || 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-                  }`}
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${item.badgeColor || 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                    }`}
                 >
                   {item.badge}
                 </span>

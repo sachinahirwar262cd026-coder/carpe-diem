@@ -5,6 +5,8 @@ pandas
 scikit-learn
 lightgbm
 tensorflow-cpu
+Pillow
+python-multipart
 joblib
 requests
 groq

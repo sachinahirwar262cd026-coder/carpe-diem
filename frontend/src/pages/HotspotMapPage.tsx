@@ -17,6 +17,7 @@ import { InteractiveLeafletMap } from '../components/map/InteractiveLeafletMap';
 import { MapFilterControls } from '../components/map/MapFilterControls';
 import { MicroPocket, NoiseHotspot, CitizenComplaint } from '../types';
 import { getAqiBadgeStyle, getAqiCategory, getNoiseBadgeStyle } from '../utils/helpers';
+import { TrafficNoiseEstimator } from '@/components/noise/TrafficNoiseEstimator';
 
 export const HotspotMapPage: React.FC = () => {
   const { selectedCity, noiseHotspots, complaints } = useApp();
@@ -55,6 +56,8 @@ export const HotspotMapPage: React.FC = () => {
           </span>
         </div>
       </div>
+
+      <TrafficNoiseEstimator />
 
       {/* Layer Controls Bar */}
       <MapFilterControls
