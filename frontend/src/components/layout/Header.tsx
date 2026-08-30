@@ -2,28 +2,20 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Menu,
-  Bell,
-  Activity,
-  User,
-  CheckCircle2,
-  AlertTriangle,
   ChevronDown,
-  Sparkles,
   MapPin,
-  RefreshCw,
   LogOut,
-  Shield,
-  Phone,
-  Mail,
-  Users,
+  Crosshair,
+  User,
+  Check,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { reverseGeocode } from '../../services/api/geocodingService';
 import { getAqiBadgeStyle, getAqiCategory } from '../../utils/helpers';
-import { ThemeSelector } from '../common/ThemeSelector';
-import { Crosshair } from 'lucide-react';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -34,17 +26,23 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
     cities,
     selectedCity,
     setSelectedCityId,
-    userGpsLocation,
     setUserGpsLocation,
-    liveUpdatesEnabled,
-    setLiveUpdatesEnabled,
-    lastUpdated,
-    activeAlertCount,
+    theme,
+    setTheme,
   } = useApp();
 
-  const { user, logout, activePortal, setActivePortal } = useAuth();
+  const { user, logout } = useAuth();
   const geo = useGeolocation(false);
   const [gpsDetecting, setGpsDetecting] = useState<boolean>(false);
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const isDark = theme === 'dark-slate' || theme === 'deep-forest' || theme === 'cyber-neon' || (theme as string) === 'dark';
+
+  const toggleTheme = () => {
+    setTheme(isDark ? 'clean-light' : 'dark-slate');
+  };
 
   const handleHeaderDetectGps = async () => {
     setGpsDetecting(true);
@@ -66,11 +64,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
       setGpsDetecting(false);
     }
   };
-  const navigate = useNavigate();
-
-  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const aqiBadge = getAqiBadgeStyle(getAqiCategory(selectedCity.currentAqi));
 
@@ -91,29 +84,33 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   };
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-slate-900/80 backdrop-blur-xl border-b border-slate-800/80 px-4 lg:px-8 py-3.5 flex items-center justify-between">
-      {/* Left section: Hamburger & City Switcher */}
-      <div className="flex items-center space-x-3 lg:space-x-6">
+    <header className="sticky top-0 z-30 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between transition-colors duration-200">
+      {/* Left: Mobile Menu Trigger + Live Location City Selector */}
+      <div className="flex items-center space-x-3 sm:space-x-4">
         <button
           onClick={onToggleSidebar}
-          className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          className="lg:hidden p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition focus:outline-none"
           aria-label="Toggle Sidebar"
         >
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Dynamic City Selector Dropdown */}
+        {/* Live Location / City Selector Dropdown */}
         <div className="relative">
           <button
             onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
-            className="flex items-center space-x-2.5 px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 text-slate-200 transition text-sm font-medium shadow-sm"
+            className="flex items-center space-x-2 sm:space-x-3 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200/80 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-100 transition text-xs sm:text-sm font-medium shadow-xs"
           >
-            <MapPin className="w-4 h-4 text-teal-400" />
-            <span className="font-semibold">{selectedCity.name}</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full border ${aqiBadge.bg} ${aqiBadge.text} ${aqiBadge.border}`}>
+            <div className="flex items-center space-x-1.5 text-emerald-600 dark:text-teal-400">
+              <MapPin className="w-4 h-4 shrink-0" />
+              <span className="font-bold text-slate-900 dark:text-white truncate max-w-[120px] sm:max-w-[180px]">
+                {selectedCity.name}
+              </span>
+            </div>
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${aqiBadge.bg} ${aqiBadge.text} ${aqiBadge.border}`}>
               AQI {selectedCity.currentAqi}
             </span>
-            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isCityDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isCityDropdownOpen && (
@@ -122,213 +119,95 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
                 className="fixed inset-0 z-40"
                 onClick={() => setIsCityDropdownOpen(false)}
               />
-              <div className="absolute left-0 mt-2 w-72 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-800 mb-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Select Monitoring Region
-                  </p>
+              <div className="absolute left-0 mt-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Select Monitoring Location
+                  </span>
                   <button
                     type="button"
                     onClick={handleHeaderDetectGps}
                     disabled={gpsDetecting}
-                    className="text-[10px] font-bold text-teal-400 hover:text-teal-300 flex items-center space-x-1"
+                    className="text-[11px] font-semibold text-emerald-600 dark:text-teal-400 hover:underline flex items-center space-x-1 transition disabled:opacity-50"
                   >
                     <Crosshair className={`w-3 h-3 ${gpsDetecting ? 'animate-spin' : ''}`} />
-                    <span>{gpsDetecting ? 'Locating...' : 'Auto-Detect GPS'}</span>
+                    <span>{gpsDetecting ? 'Locating...' : 'GPS Auto-Detect'}</span>
                   </button>
                 </div>
-                {cities.map((city) => {
-                  const badge = getAqiBadgeStyle(getAqiCategory(city.currentAqi));
-                  const isSelected = city.id === selectedCity.id;
-                  return (
-                    <button
-                      key={city.id}
-                      onClick={() => {
-                        setSelectedCityId(city.id);
-                        setIsCityDropdownOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left text-xs transition ${
-                        isSelected ? 'bg-teal-500/10 border border-teal-500/30 text-white' : 'hover:bg-slate-800 text-slate-300'
-                      }`}
-                    >
-                      <div>
-                        <div className="font-bold flex items-center space-x-1.5">
-                          <span>{city.name}</span>
-                          {city.id === 'mangalore-nitk' && (
-                            <span className="text-[9px] bg-teal-500/20 text-teal-300 px-1 py-0.2 rounded font-mono">
-                              NITK
-                            </span>
-                          )}
+
+                <div className="max-h-64 overflow-y-auto space-y-1 custom-scrollbar pr-1">
+                  {cities.map((city) => {
+                    const badge = getAqiBadgeStyle(getAqiCategory(city.currentAqi));
+                    const isSelected = city.id === selectedCity.id;
+                    return (
+                      <button
+                        key={city.id}
+                        onClick={() => {
+                          setSelectedCityId(city.id);
+                          setIsCityDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left text-xs transition ${
+                          isSelected
+                            ? 'bg-emerald-50 dark:bg-teal-500/15 border border-emerald-200 dark:border-teal-500/40 text-emerald-900 dark:text-white font-bold'
+                            : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2 min-w-0">
+                          {isSelected && <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-teal-400 shrink-0" />}
+                          <div className="truncate">
+                            <span className="truncate">{city.name}</span>
+                            <span className="text-[10px] text-slate-400 block font-normal">{city.state}</span>
+                          </div>
                         </div>
-                        <p className="text-[11px] text-slate-400">{city.state} · {city.pockets.length} micro-pockets</p>
-                      </div>
-                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${badge.bg} ${badge.text} ${badge.border}`}>
-                        {city.currentAqi} AQI
-                      </span>
-                    </button>
-                  );
-                })}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 ${badge.bg} ${badge.text} ${badge.border}`}>
+                          {city.currentAqi} AQI
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </>
           )}
-        </div>
-
-        {/* Quick Weather pill for large screens */}
-        <div className="hidden xl:flex items-center space-x-3 px-3 py-1.5 rounded-xl bg-slate-950/50 border border-slate-800 text-xs text-slate-400">
-          <span>{selectedCity.weather.condition}</span>
-          <span className="text-slate-600">•</span>
-          <span>{selectedCity.weather.temp}°C</span>
-          <span className="text-slate-600">•</span>
-          <span>Wind: {selectedCity.weather.windSpeed} km/h {selectedCity.weather.windDirection}</span>
         </div>
       </div>
 
-      {/* Right section: Portal Toggle, Theme Selector, Live Pulse toggle, Notifications & Profile */}
-      <div className="flex items-center space-x-2 lg:space-x-3">
-        {/* Portal Switcher Pill (Desktop) */}
-        <div className="hidden sm:flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800">
-          <button
-            onClick={() => {
-              setActivePortal('citizen');
-              navigate('/citizen');
-            }}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
-              activePortal === 'citizen'
-                ? 'bg-teal-500 text-slate-950 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>Citizen</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActivePortal('officer');
-              navigate('/officer');
-            }}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
-              activePortal === 'officer'
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <Shield className="w-3.5 h-3.5" />
-            <span>Officer</span>
-          </button>
-        </div>
-
-        {/* Theme Selector */}
-        <ThemeSelector />
-
-        {/* Live Stream / Simulation toggle */}
+      {/* Right: Light/Dark Theme Switch + User Profile */}
+      <div className="flex items-center space-x-2 sm:space-x-3">
+        {/* Light / Dark Mode Toggle */}
         <button
-          onClick={() => setLiveUpdatesEnabled(!liveUpdatesEnabled)}
-          className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
-            liveUpdatesEnabled
-              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-              : 'bg-slate-800 text-slate-400 border-slate-700'
-          }`}
-          title="Toggle live telemetry stream simulation"
+          onClick={toggleTheme}
+          className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700/80 transition"
+          title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+          aria-label="Toggle Theme"
         >
-          <Activity className={`w-3.5 h-3.5 ${liveUpdatesEnabled ? 'animate-pulse text-emerald-400' : ''}`} />
-          <span className="hidden sm:inline">{liveUpdatesEnabled ? 'Live Telemetry' : 'Paused'}</span>
+          {isDark ? (
+            <Sun className="w-4 h-4 text-amber-400" />
+          ) : (
+            <Moon className="w-4 h-4 text-slate-700" />
+          )}
         </button>
 
-        {/* Notification Bell */}
-        <div className="relative">
-          <button
-            onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-            className="relative p-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/80 transition"
-            aria-label="Alerts"
-          >
-            <Bell className="w-4 h-4" />
-            {activeAlertCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center animate-bounce">
-                {activeAlertCount}
-              </span>
-            )}
-          </button>
-
-          {isNotificationOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setIsNotificationOpen(false)}
-              />
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="w-4 h-4 text-amber-400" />
-                    <span className="font-bold text-sm text-slate-100">Live Environmental Alerts</span>
-                  </div>
-                  <span className="text-[10px] text-slate-400 font-mono">Updated {lastUpdated}</span>
-                </div>
-
-                <div className="mt-3 space-y-2 max-h-72 overflow-y-auto custom-scrollbar">
-                  {selectedCity.currentAqi > 200 && (
-                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs">
-                      <div className="flex items-center justify-between text-rose-400 font-bold mb-1">
-                        <span>Asthma & Respiratory Alert</span>
-                        <span className="text-[10px] px-1.5 py-0.5 bg-rose-500/20 rounded">Critical</span>
-                      </div>
-                      <p className="text-slate-300">
-                        {selectedCity.name} AQI is {selectedCity.currentAqi} ({selectedCity.category}). Asthmatic patients should avoid morning exertion.
-                      </p>
-                    </div>
-                  )}
-
-                  {selectedCity.currentNoise > 75 && (
-                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs">
-                      <div className="flex items-center justify-between text-amber-400 font-bold mb-1">
-                        <span>Acoustic Threshold Exceeded</span>
-                        <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/20 rounded">Traffic Alert</span>
-                      </div>
-                      <p className="text-slate-300">
-                        Average street decibels at {selectedCity.currentNoise} dB(A). CORTN model detects high congestion honking.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs">
-                    <div className="flex items-center justify-between text-teal-400 font-bold mb-1">
-                      <div className="flex items-center space-x-1.5">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>AI Forecast Available</span>
-                      </div>
-                      <span className="text-[10px] px-1.5 py-0.5 bg-teal-500/20 rounded">BiLSTM</span>
-                    </div>
-                    <p className="text-slate-300">
-                      24-hour predictive trend computed for all {selectedCity.pockets.length} micro-pockets in {selectedCity.name}.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* User / Officer Profile Section with Dropdown & Logout */}
+        {/* User Profile */}
         {user ? (
           <div className="relative">
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center space-x-2.5 pl-2 py-1 pr-2 rounded-xl hover:bg-slate-800/80 border border-transparent hover:border-slate-700/80 transition"
+              className="flex items-center space-x-2.5 p-1 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200/80 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/60 transition"
+              aria-label="User Profile"
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 via-emerald-500 to-indigo-600 p-[1.5px] shadow-sm">
-                <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center text-teal-300 font-black text-xs">
-                  {getInitials(user.name)}
-                </div>
+              <div className="w-8 h-8 rounded-lg bg-emerald-600 dark:bg-teal-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                {getInitials(user.name)}
               </div>
-              <div className="hidden md:block text-left">
-                <p className="text-xs font-bold text-slate-100 leading-tight truncate max-w-[130px]">
+              <div className="hidden sm:block text-left">
+                <p className="text-xs font-semibold text-slate-900 dark:text-white leading-tight truncate max-w-[120px]">
                   {user.name}
                 </p>
-                <p className="text-[10px] text-teal-400/90 font-medium truncate max-w-[130px]">
-                  {user.role}
+                <p className="text-[10px] text-slate-500 dark:text-teal-400 font-medium truncate max-w-[120px]">
+                  {user.role || 'Officer / Citizen'}
                 </p>
               </div>
-              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 hidden sm:block ${isProfileOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isProfileOpen && (
@@ -337,43 +216,26 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
                   className="fixed inset-0 z-40"
                   onClick={() => setIsProfileOpen(false)}
                 />
-                <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150">
-                  {/* User Profile Header */}
-                  <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 mb-2">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-emerald-600 flex items-center justify-center text-slate-950 font-black text-sm shadow-md">
+                <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 mb-2">
+                    <div className="flex items-center space-x-2.5">
+                      <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-teal-500/20 text-emerald-700 dark:text-teal-400 border border-emerald-200 dark:border-teal-500/30 flex items-center justify-center font-bold text-xs">
                         {getInitials(user.name)}
                       </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-white">{user.name}</h4>
-                        <span className="text-[10px] font-semibold text-teal-400 font-mono">
-                          {user.role}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1 text-[11px] text-slate-400 pt-2 border-t border-slate-800">
-                      <div className="flex items-center space-x-2 truncate">
-                        <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                        <span className="truncate">{user.email}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                        <span>+91 {user.mobile}</span>
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{user.name}</h4>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{user.email || 'user@prana.ai'}</p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Actions & Logout */}
-                  <div className="space-y-1 pt-1">
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center space-x-2 px-3 py-2 rounded-xl text-left text-xs font-bold text-rose-400 hover:bg-rose-500/15 hover:text-rose-300 transition"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Log Out of Session</span>
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center space-x-2 px-3 py-2 rounded-xl text-left text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/15 transition"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
                 </div>
               </>
             )}
@@ -381,9 +243,10 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
         ) : (
           <Link
             to="/login"
-            className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold transition shadow-md shadow-teal-500/20"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-xs"
           >
-            Sign In
+            <User className="w-3.5 h-3.5" />
+            <span>Sign In</span>
           </Link>
         )}
       </div>

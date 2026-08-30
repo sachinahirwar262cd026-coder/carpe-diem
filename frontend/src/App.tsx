@@ -7,11 +7,8 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { CitizenDashboardPage } from './pages/citizen/CitizenDashboardPage';
 import { AirEvidencePage } from './pages/citizen/AirEvidencePage';
 import { NoiseEvidencePage } from './pages/citizen/NoiseEvidencePage';
-import { OfficerDashboardPage } from './pages/officer/OfficerDashboardPage';
-import { AirQualityPage } from './pages/AirQualityPage';
 import { NoiseMonitoringPage } from './pages/NoiseMonitoringPage';
 import { HotspotMapPage } from './pages/HotspotMapPage';
 import { SubmitComplaintPage } from './pages/SubmitComplaintPage';
@@ -38,24 +35,25 @@ export const App: React.FC = () => {
                 </ProtectedRoute>
               }
             >
-              {/* Unified Home Dashboard */}
+              {/* Unified Dashboard & Air Forecast */}
               <Route index element={<DashboardPage />} />
+              <Route path="air-quality" element={<Navigate to="/" replace />} />
 
-              {/* Citizen Portal Routes */}
-              <Route path="citizen" element={<CitizenDashboardPage />} />
-              <Route path="citizen/air-evidence" element={<AirEvidencePage />} />
-              <Route path="citizen/noise-evidence" element={<NoiseEvidencePage />} />
-
-              {/* Officer / Authority Portal Route */}
-              <Route path="officer" element={<OfficerDashboardPage />} />
-
-              {/* Universal Core Modules */}
-              <Route path="air-quality" element={<AirQualityPage />} />
+              {/* Core Modules */}
               <Route path="noise-monitoring" element={<NoiseMonitoringPage />} />
               <Route path="hotspots" element={<HotspotMapPage />} />
               <Route path="complaints" element={<SubmitComplaintPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="reports" element={<AiReportsPage />} />
+
+              {/* Evidence Submission Sub-Routes */}
+              <Route path="citizen/air-evidence" element={<AirEvidencePage />} />
+              <Route path="citizen/noise-evidence" element={<NoiseEvidencePage />} />
+
+              {/* Legacy / Redundant Redirects */}
+              <Route path="citizen" element={<Navigate to="/" replace />} />
+              <Route path="officer" element={<Navigate to="/" replace />} />
+
               <Route path="404" element={<NotFoundPage />} />
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Route>
