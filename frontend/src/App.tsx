@@ -9,7 +9,6 @@ import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { AirEvidencePage } from './pages/citizen/AirEvidencePage';
 import { NoiseEvidencePage } from './pages/citizen/NoiseEvidencePage';
-import { AirQualityPage } from './pages/AirQualityPage';
 import { NoiseMonitoringPage } from './pages/NoiseMonitoringPage';
 import { HotspotMapPage } from './pages/HotspotMapPage';
 import { SubmitComplaintPage } from './pages/SubmitComplaintPage';
@@ -36,11 +35,11 @@ export const App: React.FC = () => {
                 </ProtectedRoute>
               }
             >
-              {/* Unified Home Dashboard */}
+              {/* Unified Dashboard & Air Forecast */}
               <Route index element={<DashboardPage />} />
+              <Route path="air-quality" element={<Navigate to="/" replace />} />
 
               {/* Core Modules */}
-              <Route path="air-quality" element={<AirQualityPage />} />
               <Route path="noise-monitoring" element={<NoiseMonitoringPage />} />
               <Route path="hotspots" element={<HotspotMapPage />} />
               <Route path="complaints" element={<SubmitComplaintPage />} />

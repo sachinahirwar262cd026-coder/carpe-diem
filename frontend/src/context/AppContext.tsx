@@ -36,11 +36,42 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<AppTheme>('clean-light');
+  const [theme, setThemeState] = useState<AppTheme>(() => {
+    const saved = localStorage.getItem('app_theme');
+    return (saved as AppTheme) || 'dark-slate';
+  });
+
+  const setTheme = (newTheme: AppTheme) => {
+    setThemeState(newTheme);
+    localStorage.setItem('app_theme', newTheme);
+  };
+
+  useEffect(() => {
+    const isDark = theme === 'dark-slate' || theme === 'deep-forest' || theme === 'cyber-neon' || (theme as string) === 'dark';
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
+      document.body.classList.remove('theme-clean-light');
+      document.body.classList.add('theme-dark-slate');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+      document.body.classList.remove('theme-dark-slate');
+      document.body.classList.add('theme-clean-light');
+    }
+  }, [theme]);
+
   const [cities] = useState<CityData[]>(CITIES_DATA);
-  const [selectedCityId, setSelectedCityId] = useState<string>('mangalore-nitk');
+  const [selectedCityId, setSelectedCityId] = useState<string>('delhi');
   const [userGpsLocation, setUserGpsLocation] = useState<UserGpsInfo | null>(null);
-  const [complaints, setComplaints] = useState<CitizenComplaint[]>(INITIAL_MOCK_COMPLAINTS);
+  const [complaints, setComplaints] = useState<CitizenComplaint[]>(() => {
+    try {
+      const saved = localStorage.getItem('citizen_complaints');
+      return saved ? JSON.parse(saved) : INITIAL_MOCK_COMPLAINTS;
+    } catch {
+      return INITIAL_MOCK_COMPLAINTS;
+    }
+  });
   const [noiseHotspots] = useState<NoiseHotspot[]>(MOCK_NOISE_HOTSPOTS);
   const [liveUpdatesEnabled, setLiveUpdatesEnabled] = useState<boolean>(true);
   const [liveTick, setLiveTick] = useState<number>(0);
@@ -60,7 +91,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [selectedCity]);
 
-  // Live simulation tick every 6 seconds to show dynamic system behavior
+  // Live simulation tick
   useEffect(() => {
     if (!liveUpdatesEnabled) return;
     const interval = setInterval(() => {
@@ -75,7 +106,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     data: Omit<CitizenComplaint, 'id' | 'trackingNumber' | 'timestamp' | 'status' | 'citizenCredibility'>
   ): CitizenComplaint => {
     const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const cityCode = data.city.includes('Delhi') ? 'DL' : data.city.includes('Bengaluru') ? 'KA' : data.city.includes('Mumbai') ? 'MH' : 'KT';
+    const cityCode = data.city.includes('Delhi') ? 'DL' : data.city.includes('Bengaluru') ? 'KA' : data.city.includes('Mumbai') ? 'MH' : 'IN';
     const trackingNumber = `SIH-2026-${cityCode}-${randomNum}`;
     
     const now = new Date();
@@ -90,7 +121,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       citizenCredibility: 94,
     };
 
-    setComplaints((prev) => [newComplaint, ...prev]);
+    setComplaints((prev) => {
+      const updated = [newComplaint, ...prev];
+      try {
+        localStorage.setItem('citizen_complaints', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
     return newComplaint;
   };
 

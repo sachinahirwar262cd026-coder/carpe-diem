@@ -3,260 +3,55 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    @apply transition-colors duration-200;
+  }
+  
   body {
-    @apply bg-slate-50 text-slate-900 antialiased selection:bg-teal-500 selection:text-white font-sans min-h-screen overflow-x-hidden;
+    @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-emerald-500 selection:text-white font-sans min-h-screen overflow-x-hidden;
   }
 }
 
-/* ========================================================
-   1. CLEAN LIGHT ECO THEME (DEFAULT PREMIER LIGHT THEME)
-   ======================================================== */
-body.theme-clean-light {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
-}
-
-body.theme-clean-light header {
-  background-color: rgba(255, 255, 255, 0.92) !important;
-  border-color: #e2e8f0 !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04) !important;
-}
-
-body.theme-clean-light aside {
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.03) !important;
-}
-
-body.theme-clean-light aside .text-white {
-  color: #0f172a !important;
-}
-
-/* Cards & Containers in Clean Light Theme */
-body.theme-clean-light .bg-slate-900,
-body.theme-clean-light .bg-slate-900\/80,
-body.theme-clean-light .bg-slate-900\/90,
-body.theme-clean-light .bg-slate-900\/60,
-body.theme-clean-light .bg-slate-900\/95 {
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.03) !important;
-}
-
-body.theme-clean-light .bg-slate-950,
-body.theme-clean-light .bg-slate-950\/40,
-body.theme-clean-light .bg-slate-950\/50,
-body.theme-clean-light .bg-slate-950\/60,
-body.theme-clean-light .bg-slate-950\/70,
-body.theme-clean-light .bg-slate-950\/80 {
-  background-color: #f8fafc !important;
-  border-color: #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-body.theme-clean-light .bg-slate-800,
-body.theme-clean-light .bg-slate-800\/40,
-body.theme-clean-light .bg-slate-800\/60,
-body.theme-clean-light .bg-slate-800\/80 {
-  background-color: #f1f5f9 !important;
-  border-color: #cbd5e1 !important;
-  color: #334155 !important;
-}
-
-/* Typography Overrides for Clean Light Theme */
-body.theme-clean-light .text-white {
-  color: #0f172a !important;
-}
-
-body.theme-clean-light .text-slate-100,
-body.theme-clean-light .text-slate-200,
-body.theme-clean-light .text-slate-300 {
-  color: #1e293b !important;
-}
-
-body.theme-clean-light .text-slate-400 {
-  color: #64748b !important;
-}
-
-body.theme-clean-light .text-slate-500 {
-  color: #94a3b8 !important;
-}
-
-/* Input Fields in Clean Light Theme */
-body.theme-clean-light input,
-body.theme-clean-light textarea,
-body.theme-clean-light select {
-  background-color: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
-}
-
-body.theme-clean-light input::placeholder,
-body.theme-clean-light textarea::placeholder {
-  color: #94a3b8 !important;
-}
-
-/* Subtle Hero Banner in Light Theme */
-body.theme-clean-light .bg-gradient-to-r.from-teal-950\/80 {
-  background: linear-gradient(to right, #ecfdf5, #f0fdf4, #f0fdfa) !important;
-  border-color: #a7f3d0 !important;
-  box-shadow: 0 10px 25px -5px rgba(20, 184, 166, 0.08) !important;
-}
-
-body.theme-clean-light footer {
-  background-color: #f8fafc !important;
-  border-color: #e2e8f0 !important;
-  color: #64748b !important;
-}
-
-/* Recharts grid lines in Clean Light Mode */
-body.theme-clean-light .recharts-cartesian-grid line {
-  stroke: #e2e8f0 !important;
-}
-
-body.theme-clean-light .recharts-text {
-  fill: #64748b !important;
-}
-
-body.theme-clean-light .recharts-default-tooltip {
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  color: #0f172a !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
-}
-
-
-/* ========================================================
-   2. DARK ECO SLATE THEME
-   ======================================================== */
-body.theme-dark-slate {
-  background-color: #020617 !important;
-  color: #f8fafc !important;
-}
-
-
-/* ========================================================
-   3. DEEP FOREST EMERALD THEME
-   ======================================================== */
-body.theme-deep-forest {
-  background-color: #021b16 !important;
-  color: #ecfdf5 !important;
-}
-
-body.theme-deep-forest .bg-slate-950,
-body.theme-deep-forest .bg-slate-950\/60,
-body.theme-deep-forest .bg-slate-950\/70,
-body.theme-deep-forest .bg-slate-950\/80 {
-  background-color: rgba(2, 33, 27, 0.7) !important;
-  border-color: rgba(16, 185, 129, 0.25) !important;
-}
-
-body.theme-deep-forest .bg-slate-900,
-body.theme-deep-forest .bg-slate-900\/80,
-body.theme-deep-forest .bg-slate-900\/90 {
-  background-color: rgba(4, 47, 39, 0.8) !important;
-  border-color: rgba(16, 185, 129, 0.3) !important;
-}
-
-body.theme-deep-forest .bg-slate-800,
-body.theme-deep-forest .bg-slate-800\/60,
-body.theme-deep-forest .bg-slate-800\/80 {
-  background-color: rgba(6, 78, 59, 0.6) !important;
-  border-color: rgba(52, 211, 153, 0.3) !important;
-}
-
-
-/* ========================================================
-   4. CYBER NEON MATRIX THEME
-   ======================================================== */
-body.theme-cyber-neon {
-  background-color: #030712 !important;
-  color: #e0f2fe !important;
-}
-
-body.theme-cyber-neon .bg-slate-950,
-body.theme-cyber-neon .bg-slate-950\/60,
-body.theme-cyber-neon .bg-slate-950\/70,
-body.theme-cyber-neon .bg-slate-950\/80 {
-  background-color: rgba(3, 7, 18, 0.9) !important;
-  border-color: rgba(6, 182, 212, 0.35) !important;
-  box-shadow: 0 0 15px rgba(6, 182, 212, 0.08) !important;
-}
-
-body.theme-cyber-neon .bg-slate-900,
-body.theme-cyber-neon .bg-slate-900\/80,
-body.theme-cyber-neon .bg-slate-900\/90 {
-  background-color: rgba(15, 23, 42, 0.9) !important;
-  border-color: rgba(168, 85, 247, 0.35) !important;
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.08) !important;
-}
-
-
-/* ========================================================
-   COMMON UTILITIES & LEAFLET MAP STYLING
-   ======================================================== */
+/* Custom Minimal Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.05);
-  border-radius: 9999px;
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.5);
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(20, 184, 166, 0.8);
+  background: #94a3b8;
 }
 
-/* Leaflet Overrides */
-.leaflet-container {
-  font-family: inherit !important;
-  border-radius: 1.5rem !important;
-  background-color: #e2e8f0 !important;
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
 
-.leaflet-popup-content-wrapper {
-  background: rgba(255, 255, 255, 0.96) !important;
-  color: #0f172a !important;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 1rem !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
-  backdrop-filter: blur(12px) !important;
-  padding: 0 !important;
+/* Report Table Styling */
+.report-content table {
+  @apply w-full border-collapse my-4 text-xs;
 }
 
-.leaflet-popup-content {
-  margin: 0 !important;
-  line-height: 1.4 !important;
+.report-content th {
+  @apply bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold p-3 text-left border-b border-slate-200 dark:border-slate-700 uppercase tracking-wider text-[10px];
 }
 
-.leaflet-popup-tip {
-  background: #ffffff !important;
+.report-content td {
+  @apply p-3 border-b border-slate-100 dark:border-slate-800/80 text-slate-700 dark:text-slate-300;
 }
 
-.custom-leaflet-marker {
-  background: transparent !important;
-  border: none !important;
-}
-
-/* Smooth Glow animations */
-@keyframes pulseGlow {
-  0%, 100% {
-    opacity: 0.4;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
-}
-
-.animate-glow {
-  animation: pulseGlow 4s ease-in-out infinite;
+.report-content tr:hover {
+  @apply bg-slate-50/80 dark:bg-slate-800/40 transition;
 }
