@@ -218,6 +218,62 @@ async def generate_report_endpoint(req: ReportRequest):
         raise HTTPException(status_code=500, detail=f"Report generation error: {str(e)}")
 
 
+# ── CORTN Noise Prediction ───────────────────────────────────────────────────
+from cortn_engine import calculate_cortn_noise, generate_diurnal_24h_noise, get_city_corridor_predictions
+
+class CortnRequest(BaseModel):
+    vehicles_per_hour: float = Field(2400.0, description="Vehicles per hour (Q)")
+    mean_speed_kmph: float = Field(35.0, description="Mean traffic speed in km/h (V)")
+    heavy_vehicle_pct: float = Field(18.0, description="Heavy commercial vehicle percentage (p)")
+    road_gradient_pct: Optional[float] = Field(0.0, description="Road gradient percentage (G)")
+    surface_type: Optional[str] = Field("asphalt", description="Road surface type: asphalt, concrete, porous, cobblestone")
+    distance_meters: Optional[float] = Field(13.5, description="Distance to receiver in meters (d)")
+    zone_type: Optional[str] = Field("commercial", description="CPCB Zone: industrial, commercial, residential, silence")
+    is_night: Optional[bool] = Field(False, description="Is nighttime evaluation")
+
+@app.post("/api/noise/cortn-predict")
+async def cortn_predict(req: CortnRequest):
+    """
+    Execute standard CORTN (Calculation of Road Traffic Noise) mathematical modeling.
+    Returns L10, Leq, Lmax, CPCB limit violation, and step-by-step mathematical breakdown.
+    """
+    try:
+        result = calculate_cortn_noise(
+            vehicles_per_hour=req.vehicles_per_hour,
+            mean_speed_kmph=req.mean_speed_kmph,
+            heavy_vehicle_pct=req.heavy_vehicle_pct,
+            road_gradient_pct=req.road_gradient_pct or 0.0,
+            surface_type=req.surface_type or "asphalt",
+            distance_meters=req.distance_meters or 13.5,
+            zone_type=req.zone_type or "commercial",
+            is_night=req.is_night or False,
+        )
+        return {"status": "success", "prediction": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"CORTN prediction error: {str(e)}")
+
+@app.get("/api/noise/city-corridors")
+async def get_city_corridors_noise(city: str = Query("Delhi", description="City name")):
+    """
+    Returns major arterial road corridors evaluated with CORTN math + 24-hour diurnal noise curve.
+    """
+    try:
+        corridors = get_city_corridor_predictions(city)
+        diurnal = generate_diurnal_24h_noise(
+            base_q=3400 if city.lower() in ("delhi", "mumbai", "bengaluru") else 2800,
+            base_v=32,
+            base_p=18,
+            zone_type="commercial"
+        )
+        return {
+            "status": "success",
+            "city": city,
+            "corridors": corridors,
+            "diurnal_24h": diurnal,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"City noise corridors error: {str(e)}")
+
 # ── Model info ────────────────────────────────────────────────────────────────
 @app.get("/api/model-info")
 async def get_model_info():
@@ -244,3 +300,4 @@ async def get_cpcb_scale():
         "categories": AQI_CATEGORIES,
         "breakpoints": CPCB_BREAKPOINTS,
     }
+

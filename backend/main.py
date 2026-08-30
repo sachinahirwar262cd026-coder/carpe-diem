@@ -93,6 +93,16 @@ async def cpcb_scale(request: Request):
     return await _proxy("GET", "/api/cpcb-scale", request)
 
 
+@app.post("/api/noise/cortn-predict")
+async def noise_cortn_predict(request: Request):
+    return await _proxy("POST", "/api/noise/cortn-predict", request)
+
+
+@app.get("/api/noise/city-corridors")
+async def noise_city_corridors(request: Request):
+    return await _proxy("GET", "/api/noise/city-corridors", request)
+
+
 @app.get("/")
 async def root():
     return {
