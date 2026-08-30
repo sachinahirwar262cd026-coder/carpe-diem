@@ -35,33 +35,31 @@ export const LoginPage: React.FC = () => {
     return <Navigate to={from} replace />;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier.trim() || !password) {
-      setErrorMessage('Please enter both Email/Mobile and Password.');
+      setErrorMessage('Please enter both Email and Password.');
       return;
     }
 
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    setTimeout(() => {
-      const result = login(identifier, password);
-      setIsSubmitting(false);
+    const result = await login(identifier, password);
+    setIsSubmitting(false);
 
-      if (!result.success) {
-        setErrorMessage(result.message || 'Invalid credentials. Please verify your Email or Password.');
-      } else {
-        try {
-          confetti({
-            particleCount: 60,
-            spread: 60,
-            origin: { y: 0.6 },
-          });
-        } catch {}
-        navigate(from, { replace: true });
-      }
-    }, 500);
+    if (!result.success) {
+      setErrorMessage(result.message || 'Invalid credentials. Please verify your Email or Password.');
+    } else {
+      try {
+        confetti({
+          particleCount: 60,
+          spread: 60,
+          origin: { y: 0.6 },
+        });
+      } catch {}
+      navigate(from, { replace: true });
+    }
   };
 
   const handleDemoClick = (role: 'officer' | 'citizen') => {

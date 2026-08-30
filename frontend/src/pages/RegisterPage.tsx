@@ -101,7 +101,7 @@ export const RegisterPage: React.FC = () => {
     setErrorMessage(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Mark all as touched
@@ -122,29 +122,27 @@ export const RegisterPage: React.FC = () => {
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    setTimeout(() => {
-      const result = register({
-        name: formData.name,
-        email: formData.email,
-        mobile: formData.mobile,
-        password: formData.password,
-      });
+    const result = await register({
+      name: formData.name,
+      email: formData.email,
+      mobile: formData.mobile,
+      password: formData.password,
+    });
 
-      setIsSubmitting(false);
+    setIsSubmitting(false);
 
-      if (!result.success) {
-        setErrorMessage(result.message || 'Registration failed. Please try again.');
-      } else {
-        try {
-          confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-          });
-        } catch {}
-        navigate('/');
-      }
-    }, 600);
+    if (!result.success) {
+      setErrorMessage(result.message || 'Registration failed. Please try again.');
+    } else {
+      try {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+        });
+      } catch {}
+      navigate('/');
+    }
   };
 
   return (
