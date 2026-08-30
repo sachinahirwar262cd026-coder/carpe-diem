@@ -17,17 +17,24 @@ import { AudioRecorderSim } from './AudioRecorderSim';
 import { CitizenComplaint } from '../../types';
 import confetti from 'canvas-confetti';
 
+import { useGeolocation } from '../../hooks/useGeolocation';
+import { reverseGeocode } from '../../services/api/geocodingService';
+
 interface ComplaintFormProps {
   onSuccess: (complaint: CitizenComplaint) => void;
 }
 
 export const ComplaintForm: React.FC<ComplaintFormProps> = ({ onSuccess }) => {
-  const { selectedCity, addComplaint } = useApp();
+  const { selectedCity, setSelectedCityId, setUserGpsLocation, addComplaint } = useApp();
+  const geo = useGeolocation(false);
 
   const [type, setType] = useState<'air' | 'noise' | 'both'>('air');
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [locationName, setLocationName] = useState<string>('');
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsLoading, setGpsLoading] = useState<boolean>(false);
+  const [gpsError, setGpsError] = useState<string | null>(null);
   const [evidenceMode, setEvidenceMode] = useState<'photo' | 'audio' | 'both'>('photo');
   const [photoSelected, setPhotoSelected] = useState<boolean>(false);
   const [audioDuration, setAudioDuration] = useState<number>(0);
@@ -35,9 +42,35 @@ export const ComplaintForm: React.FC<ComplaintFormProps> = ({ onSuccess }) => {
   const [detectedIntensity, setDetectedIntensity] = useState<string>('');
   const [aiConfidence, setAiConfidence] = useState<number>(95.4);
 
-  // Pre-fill location based on active city
-  const handleUseCurrentLocation = () => {
-    setLocationName(`${selectedCity.pockets[0]?.name || selectedCity.name}, ${selectedCity.state}`);
+  // Fetch real device GPS coordinates & reverse geocode
+  const handleUseCurrentLocation = async () => {
+    setGpsLoading(true);
+    setGpsError(null);
+    try {
+      const pos = await geo.getPosition();
+      setGpsCoords({ lat: pos.lat, lng: pos.lng });
+
+      const geoInfo = await reverseGeocode(pos.lat, pos.lng);
+      setLocationName(geoInfo.displayName);
+
+      setUserGpsLocation({
+        lat: pos.lat,
+        lng: pos.lng,
+        accuracy: pos.accuracy,
+        placeName: geoInfo.displayName,
+      });
+
+      if (geoInfo.nearestMonitoredCityId) {
+        setSelectedCityId(geoInfo.nearestMonitoredCityId);
+      }
+    } catch (err: any) {
+      setGpsError(err.message || 'Could not fetch GPS location.');
+      if (geo.lat && geo.lng) {
+        setLocationName(`${geo.lat.toFixed(5)}°N, ${geo.lng.toFixed(5)}°E (Location name unavailable)`);
+      }
+    } finally {
+      setGpsLoading(false);
+    }
   };
 
   const handleSimulatePhotoUpload = () => {
@@ -66,6 +99,9 @@ export const ComplaintForm: React.FC<ComplaintFormProps> = ({ onSuccess }) => {
 
     setIsSubmitting(true);
 
+    const finalLat = gpsCoords ? gpsCoords.lat : selectedCity.center[0] + (Math.random() - 0.5) * 0.04;
+    const finalLng = gpsCoords ? gpsCoords.lng : selectedCity.center[1] + (Math.random() - 0.5) * 0.04;
+
     setTimeout(() => {
       const newCmp = addComplaint({
         type,
@@ -73,8 +109,8 @@ export const ComplaintForm: React.FC<ComplaintFormProps> = ({ onSuccess }) => {
         description,
         locationName,
         city: selectedCity.name,
-        lat: selectedCity.center[0] + (Math.random() - 0.5) * 0.04,
-        lng: selectedCity.center[1] + (Math.random() - 0.5) * 0.04,
+        lat: finalLat,
+        lng: finalLng,
         citizenName: 'Lokesh Satiwada (Verified Citizen)',
         evidenceType: evidenceMode,
         audioDurationSec: audioDuration || undefined,
@@ -174,22 +210,41 @@ export const ComplaintForm: React.FC<ComplaintFormProps> = ({ onSuccess }) => {
           <button
             type="button"
             onClick={handleUseCurrentLocation}
-            className="text-[11px] text-teal-400 hover:text-teal-300 font-semibold flex items-center space-x-1"
+            disabled={gpsLoading}
+            className="text-[11px] text-teal-400 hover:text-teal-300 font-semibold flex items-center space-x-1 transition disabled:opacity-50"
           >
-            <MapPin className="w-3 h-3" />
-            <span>Use GPS Location ({selectedCity.name})</span>
+            {gpsLoading ? (
+              <>
+                <div className="w-3 h-3 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
+                <span>Acquiring Device GPS...</span>
+              </>
+            ) : (
+              <>
+                <MapPin className="w-3 h-3" />
+                <span>Fetch Live Device GPS</span>
+              </>
+            )}
           </button>
         </div>
         <div className="relative">
           <input
             type="text"
             required
-            placeholder="e.g. Anand Vihar ISBT Flyover near Bus Depot, Delhi"
+            placeholder="e.g. 12.9716°N, 77.5946°E (Silk Board Junction, Bengaluru)"
             value={locationName}
-            onChange={(e) => setLocationName(e.target.value)}
+            onChange={(e) => {
+              setLocationName(e.target.value);
+              setGpsCoords(null); // Clear manual overwrite
+            }}
             className="w-full px-4 py-3 rounded-xl bg-slate-950/70 border border-slate-800 focus:border-teal-500 focus:outline-none text-slate-100 placeholder-slate-500 text-sm font-medium transition"
           />
         </div>
+        {gpsError && (
+          <p className="mt-1 text-[11px] text-amber-400 flex items-center space-x-1">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            <span>{gpsError}</span>
+          </p>
+        )}
       </div>
 
       {/* 3. Title & Description */}
