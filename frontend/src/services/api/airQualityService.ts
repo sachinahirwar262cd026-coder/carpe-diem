@@ -4,7 +4,7 @@
  * (proxied to http://localhost:8000 in dev via vite.config.ts)
  */
 
-const BASE = '/api';
+const BASE = "/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -30,10 +30,15 @@ export interface ForecastResponse {
     trend: string;
   };
   hourly_forecast: Array<{
-    hour: string;
-    aqi: number;
-    pm2_5: number;
-    pm10: number;
+    hour?: number;
+    label?: string;
+    cpcb_aqi?: number;
+    aqi?: number;
+    category?: string;
+    pm2_5?: number;
+    pm25?: number;
+    pm10?: number;
+    [key: string]: unknown;
   }>;
   series: {
     hours: string[];
@@ -64,8 +69,8 @@ export interface HealthResponse {
  */
 export async function fetchForecast(city: string): Promise<ForecastResponse> {
   const res = await fetch(`${BASE}/forecast`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ city }),
   });
   if (!res.ok) {
@@ -80,8 +85,8 @@ export async function fetchForecast(city: string): Promise<ForecastResponse> {
  */
 export async function generateReport(city: string): Promise<ReportResponse> {
   const res = await fetch(`${BASE}/generate-report`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ city }),
   });
   if (!res.ok) {
@@ -94,7 +99,10 @@ export async function generateReport(city: string): Promise<ReportResponse> {
 /**
  * Fetch the list of supported Indian cities.
  */
-export async function fetchCities(): Promise<{ total: number; cities: Array<{ name: string; lat: number; lon: number; state: string }> }> {
+export async function fetchCities(): Promise<{
+  total: number;
+  cities: Array<{ name: string; lat: number; lon: number; state: string }>;
+}> {
   const res = await fetch(`${BASE}/cities`);
   if (!res.ok) throw new Error(`Cities API error: ${res.status}`);
   return res.json();

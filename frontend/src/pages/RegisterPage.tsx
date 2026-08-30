@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from "react";
+import { Link, useNavigate, Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
   Shield,
   Radio,
@@ -16,19 +16,19 @@ import {
   ArrowRight,
   Wind,
   Volume2,
-} from 'lucide-react';
-import confetti from 'canvas-confetti';
+} from "lucide-react";
+import confetti from "canvas-confetti";
 
 export const RegisterPage: React.FC = () => {
   const { isAuthenticated, register, demoLogin } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    name: '',
-    mobile: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    name: "",
+    mobile: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -47,43 +47,44 @@ export const RegisterPage: React.FC = () => {
     const errors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      errors.name = 'Full name is required';
+      errors.name = "Full name is required";
     } else if (formData.name.trim().length < 3) {
-      errors.name = 'Name must be at least 3 characters';
+      errors.name = "Name must be at least 3 characters";
     }
 
     // 10-digit Indian mobile validation (starts with 6, 7, 8, or 9)
     const mobileRegex = /^[6-9]\d{9}$/;
     if (!formData.mobile.trim()) {
-      errors.mobile = 'Mobile number is required';
+      errors.mobile = "Mobile number is required";
     } else if (!/^\d+$/.test(formData.mobile.trim())) {
-      errors.mobile = 'Mobile number must contain digits only';
+      errors.mobile = "Mobile number must contain digits only";
     } else if (formData.mobile.trim().length !== 10) {
-      errors.mobile = 'Mobile number must be exactly 10 digits';
+      errors.mobile = "Mobile number must be exactly 10 digits";
     } else if (!mobileRegex.test(formData.mobile.trim())) {
-      errors.mobile = 'Please enter a valid 10-digit Indian mobile number (e.g. 9876543210)';
+      errors.mobile =
+        "Please enter a valid 10-digit Indian mobile number (e.g. 9876543210)";
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
-      errors.email = 'Email ID is required';
+      errors.email = "Email ID is required";
     } else if (!emailRegex.test(formData.email.trim())) {
-      errors.email = 'Please enter a valid email address';
+      errors.email = "Please enter a valid email address";
     }
 
     // Password validation (at least 8 characters)
     if (!formData.password) {
-      errors.password = 'Password is required';
+      errors.password = "Password is required";
     } else if (formData.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters long';
+      errors.password = "Password must be at least 8 characters long";
     }
 
     // Confirm password validation
     if (!formData.confirmPassword) {
-      errors.confirmPassword = 'Confirm password is required';
+      errors.confirmPassword = "Confirm password is required";
     } else if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
+      errors.confirmPassword = "Passwords do not match";
     }
 
     return errors;
@@ -101,10 +102,9 @@ export const RegisterPage: React.FC = () => {
     setErrorMessage(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Mark all as touched
     setTouched({
       name: true,
       mobile: true,
@@ -115,36 +115,39 @@ export const RegisterPage: React.FC = () => {
 
     const currentErrors = validate();
     if (Object.keys(currentErrors).length > 0) {
-      setErrorMessage('Please correct the errors in the form before submitting.');
+      setErrorMessage(
+        "Please correct the errors in the form before submitting.",
+      );
       return;
     }
 
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    setTimeout(() => {
-      const result = register({
-        name: formData.name,
-        email: formData.email,
-        mobile: formData.mobile,
-        password: formData.password,
+    const result = await register({
+      name: formData.name,
+      email: formData.email,
+      mobile: formData.mobile,
+      password: formData.password,
+    });
+
+    setIsSubmitting(false);
+
+    if (!result.success) {
+      setErrorMessage(
+        result.message || "Registration failed. Please try again.",
+      );
+      return;
+    }
+
+    try {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
       });
-
-      setIsSubmitting(false);
-
-      if (!result.success) {
-        setErrorMessage(result.message || 'Registration failed. Please try again.');
-      } else {
-        try {
-          confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-          });
-        } catch {}
-        navigate('/');
-      }
-    }, 600);
+    } catch {}
+    navigate("/");
   };
 
   return (
@@ -161,7 +164,9 @@ export const RegisterPage: React.FC = () => {
         <div className="text-center mb-8">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-teal-500/15 border border-teal-500/30 text-teal-300 text-xs font-bold mb-3 shadow-sm">
             <Radio className="w-3.5 h-3.5 animate-pulse text-teal-400" />
-            <span>Smart India Hackathon 2026 · Team Carpe diem (NIT Surathkal)</span>
+            <span>
+              Smart India Hackathon 2026 · Team Carpe diem (NIT Surathkal)
+            </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
@@ -185,7 +190,9 @@ export const RegisterPage: React.FC = () => {
                 Join India's AI Environmental Grid
               </h2>
               <p className="mt-2 text-xs text-slate-300 leading-relaxed">
-                Empowering citizens and municipal authorities with neighborhood-level 24-hour AQI forecasts and acoustic decibel surveillance.
+                Empowering citizens and municipal authorities with
+                neighborhood-level 24-hour AQI forecasts and acoustic decibel
+                surveillance.
               </p>
 
               <div className="mt-6 space-y-4">
@@ -194,9 +201,12 @@ export const RegisterPage: React.FC = () => {
                     <Wind className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white">LSTM 24h Air Prediction</h4>
+                    <h4 className="text-xs font-bold text-white">
+                      LSTM 24h Air Prediction
+                    </h4>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Hourly micro-pocket forecasts and automated asthma health advisories.
+                      Hourly micro-pocket forecasts and automated asthma health
+                      advisories.
                     </p>
                   </div>
                 </div>
@@ -206,9 +216,12 @@ export const RegisterPage: React.FC = () => {
                     <Volume2 className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white">CORTN Traffic Noise AI</h4>
+                    <h4 className="text-xs font-bold text-white">
+                      CORTN Traffic Noise AI
+                    </h4>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Real-time street sound pressure calculation without physical mic arrays.
+                      Real-time street sound pressure calculation without
+                      physical mic arrays.
                     </p>
                   </div>
                 </div>
@@ -218,9 +231,12 @@ export const RegisterPage: React.FC = () => {
                     <Shield className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white">Citizen Credibility System</h4>
+                    <h4 className="text-xs font-bold text-white">
+                      Citizen Credibility System
+                    </h4>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Audio Mel-spectrogram evidence verification for rapid municipal action.
+                      Audio Mel-spectrogram evidence verification for rapid
+                      municipal action.
                     </p>
                   </div>
                 </div>
@@ -235,8 +251,8 @@ export const RegisterPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  demoLogin('officer');
-                  navigate('/');
+                  demoLogin("officer");
+                  navigate("/");
                 }}
                 className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 text-xs font-bold transition border border-slate-700 flex items-center justify-center space-x-1.5"
               >
@@ -251,8 +267,12 @@ export const RegisterPage: React.FC = () => {
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
                 <div>
-                  <h3 className="text-lg font-black text-white">Create New Account</h3>
-                  <p className="text-xs text-slate-400">Join the SIH 2026 Environmental Portal</p>
+                  <h3 className="text-lg font-black text-white">
+                    Create New Account
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Join the SIH 2026 Environmental Portal
+                  </p>
                 </div>
                 <Link
                   to="/login"
@@ -285,16 +305,18 @@ export const RegisterPage: React.FC = () => {
                       placeholder="e.g. Lokesh Satiwada"
                       value={formData.name}
                       onChange={handleChange}
-                      onBlur={() => handleBlur('name')}
+                      onBlur={() => handleBlur("name")}
                       className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/70 border text-slate-100 placeholder-slate-500 text-xs font-medium focus:outline-none transition ${
                         touched.name && errors.name
-                          ? 'border-rose-500 focus:border-rose-500'
-                          : 'border-slate-800 focus:border-teal-500'
+                          ? "border-rose-500 focus:border-rose-500"
+                          : "border-slate-800 focus:border-teal-500"
                       }`}
                     />
                   </div>
                   {touched.name && errors.name && (
-                    <p className="text-[11px] text-rose-400 mt-1">{errors.name}</p>
+                    <p className="text-[11px] text-rose-400 mt-1">
+                      {errors.name}
+                    </p>
                   )}
                 </div>
 
@@ -315,16 +337,18 @@ export const RegisterPage: React.FC = () => {
                         placeholder="10-digit Indian Mobile"
                         value={formData.mobile}
                         onChange={handleChange}
-                        onBlur={() => handleBlur('mobile')}
+                        onBlur={() => handleBlur("mobile")}
                         className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/70 border text-slate-100 placeholder-slate-500 text-xs font-medium focus:outline-none transition ${
                           touched.mobile && errors.mobile
-                            ? 'border-rose-500 focus:border-rose-500'
-                            : 'border-slate-800 focus:border-teal-500'
+                            ? "border-rose-500 focus:border-rose-500"
+                            : "border-slate-800 focus:border-teal-500"
                         }`}
                       />
                     </div>
                     {touched.mobile && errors.mobile && (
-                      <p className="text-[11px] text-rose-400 mt-1">{errors.mobile}</p>
+                      <p className="text-[11px] text-rose-400 mt-1">
+                        {errors.mobile}
+                      </p>
                     )}
                   </div>
 
@@ -342,16 +366,18 @@ export const RegisterPage: React.FC = () => {
                         placeholder="e.g. name@example.com"
                         value={formData.email}
                         onChange={handleChange}
-                        onBlur={() => handleBlur('email')}
+                        onBlur={() => handleBlur("email")}
                         className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/70 border text-slate-100 placeholder-slate-500 text-xs font-medium focus:outline-none transition ${
                           touched.email && errors.email
-                            ? 'border-rose-500 focus:border-rose-500'
-                            : 'border-slate-800 focus:border-teal-500'
+                            ? "border-rose-500 focus:border-rose-500"
+                            : "border-slate-800 focus:border-teal-500"
                         }`}
                       />
                     </div>
                     {touched.email && errors.email && (
-                      <p className="text-[11px] text-rose-400 mt-1">{errors.email}</p>
+                      <p className="text-[11px] text-rose-400 mt-1">
+                        {errors.email}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -361,22 +387,23 @@ export const RegisterPage: React.FC = () => {
                   {/* Password */}
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                      Password (min 8 chars) <span className="text-rose-400">*</span>
+                      Password (min 8 chars){" "}
+                      <span className="text-rose-400">*</span>
                     </label>
                     <div className="relative">
                       <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                       <input
-                        type={showPassword ? 'text' : 'password'}
+                        type={showPassword ? "text" : "password"}
                         name="password"
                         required
                         placeholder="••••••••"
                         value={formData.password}
                         onChange={handleChange}
-                        onBlur={() => handleBlur('password')}
+                        onBlur={() => handleBlur("password")}
                         className={`w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-950/70 border text-slate-100 placeholder-slate-500 text-xs font-medium focus:outline-none transition ${
                           touched.password && errors.password
-                            ? 'border-rose-500 focus:border-rose-500'
-                            : 'border-slate-800 focus:border-teal-500'
+                            ? "border-rose-500 focus:border-rose-500"
+                            : "border-slate-800 focus:border-teal-500"
                         }`}
                       />
                       <button
@@ -385,11 +412,17 @@ export const RegisterPage: React.FC = () => {
                         className="absolute right-3 top-3 text-slate-400 hover:text-white"
                         aria-label="Toggle password visibility"
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                     {touched.password && errors.password && (
-                      <p className="text-[11px] text-rose-400 mt-1">{errors.password}</p>
+                      <p className="text-[11px] text-rose-400 mt-1">
+                        {errors.password}
+                      </p>
                     )}
                   </div>
 
@@ -401,30 +434,38 @@ export const RegisterPage: React.FC = () => {
                     <div className="relative">
                       <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                       <input
-                        type={showConfirmPassword ? 'text' : 'password'}
+                        type={showConfirmPassword ? "text" : "password"}
                         name="confirmPassword"
                         required
                         placeholder="••••••••"
                         value={formData.confirmPassword}
                         onChange={handleChange}
-                        onBlur={() => handleBlur('confirmPassword')}
+                        onBlur={() => handleBlur("confirmPassword")}
                         className={`w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-950/70 border text-slate-100 placeholder-slate-500 text-xs font-medium focus:outline-none transition ${
                           touched.confirmPassword && errors.confirmPassword
-                            ? 'border-rose-500 focus:border-rose-500'
-                            : 'border-slate-800 focus:border-teal-500'
+                            ? "border-rose-500 focus:border-rose-500"
+                            : "border-slate-800 focus:border-teal-500"
                         }`}
                       />
                       <button
                         type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                         className="absolute right-3 top-3 text-slate-400 hover:text-white"
                         aria-label="Toggle confirm password visibility"
                       >
-                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                     {touched.confirmPassword && errors.confirmPassword && (
-                      <p className="text-[11px] text-rose-400 mt-1">{errors.confirmPassword}</p>
+                      <p className="text-[11px] text-rose-400 mt-1">
+                        {errors.confirmPassword}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -448,7 +489,10 @@ export const RegisterPage: React.FC = () => {
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-800 text-center text-[11px] text-slate-400">
-              <span>By registering, you agree to CPCB citizen telemetry participation guidelines.</span>
+              <span>
+                By registering, you agree to CPCB citizen telemetry
+                participation guidelines.
+              </span>
             </div>
           </div>
         </div>

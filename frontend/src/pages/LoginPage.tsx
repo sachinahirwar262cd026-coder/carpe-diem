@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from "react";
+import { Link, useNavigate, Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
   Shield,
   Radio,
@@ -14,18 +14,18 @@ import {
   Wind,
   Volume2,
   CheckCircle2,
-} from 'lucide-react';
-import confetti from 'canvas-confetti';
+} from "lucide-react";
+import confetti from "canvas-confetti";
 
 export const LoginPage: React.FC = () => {
   const { isAuthenticated, login, demoLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = (location.state as any)?.from?.pathname || '/';
+  const from = (location.state as any)?.from?.pathname || "/";
 
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,36 +35,38 @@ export const LoginPage: React.FC = () => {
     return <Navigate to={from} replace />;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier.trim() || !password) {
-      setErrorMessage('Please enter both Email/Mobile and Password.');
+      setErrorMessage("Please enter both Email/Mobile and Password.");
       return;
     }
 
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    setTimeout(() => {
-      const result = login(identifier, password);
-      setIsSubmitting(false);
+    const result = await login(identifier, password);
+    setIsSubmitting(false);
 
-      if (!result.success) {
-        setErrorMessage(result.message || 'Invalid credentials. Please verify your Email or Password.');
-      } else {
-        try {
-          confetti({
-            particleCount: 60,
-            spread: 60,
-            origin: { y: 0.6 },
-          });
-        } catch {}
-        navigate(from, { replace: true });
-      }
-    }, 500);
+    if (!result.success) {
+      setErrorMessage(
+        result.message ||
+          "Invalid credentials. Please verify your Email or Password.",
+      );
+      return;
+    }
+
+    try {
+      confetti({
+        particleCount: 60,
+        spread: 60,
+        origin: { y: 0.6 },
+      });
+    } catch {}
+    navigate(from, { replace: true });
   };
 
-  const handleDemoClick = (role: 'officer' | 'citizen') => {
+  const handleDemoClick = (role: "officer" | "citizen") => {
     demoLogin(role);
     try {
       confetti({
@@ -90,7 +92,9 @@ export const LoginPage: React.FC = () => {
         <div className="text-center mb-8">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-teal-500/15 border border-teal-500/30 text-teal-300 text-xs font-bold mb-3 shadow-sm">
             <Radio className="w-3.5 h-3.5 animate-pulse text-teal-400" />
-            <span>Smart India Hackathon 2026 · Team Carpe diem (NIT Surathkal)</span>
+            <span>
+              Smart India Hackathon 2026 · Team Carpe diem (NIT Surathkal)
+            </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
@@ -114,21 +118,29 @@ export const LoginPage: React.FC = () => {
                 Access Environmental Intelligence Portal
               </h2>
               <p className="mt-2 text-xs text-slate-300 leading-relaxed">
-                Log in to access live continuous ambient telemetry, LSTM predictions, noise hotspot clusters, and citizen complaint dispatch pipelines.
+                Log in to access live continuous ambient telemetry, LSTM
+                predictions, noise hotspot clusters, and citizen complaint
+                dispatch pipelines.
               </p>
 
               <div className="mt-6 space-y-3">
                 <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex items-center space-x-3 text-xs">
                   <Wind className="w-4 h-4 text-teal-400 shrink-0" />
-                  <span className="text-slate-300">CPCB & OpenWeather Continuous Data Fusion</span>
+                  <span className="text-slate-300">
+                    CPCB & OpenWeather Continuous Data Fusion
+                  </span>
                 </div>
                 <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex items-center space-x-3 text-xs">
                   <Volume2 className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <span className="text-slate-300">CORTN Traffic Noise Decibel Estimation</span>
+                  <span className="text-slate-300">
+                    CORTN Traffic Noise Decibel Estimation
+                  </span>
                 </div>
                 <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex items-center space-x-3 text-xs">
                   <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
-                  <span className="text-slate-300">LLM Autonomous Authority Action Dossier</span>
+                  <span className="text-slate-300">
+                    LLM Autonomous Authority Action Dossier
+                  </span>
                 </div>
               </div>
             </div>
@@ -142,7 +154,7 @@ export const LoginPage: React.FC = () => {
               <div className="grid grid-cols-1 gap-2">
                 <button
                   type="button"
-                  onClick={() => handleDemoClick('officer')}
+                  onClick={() => handleDemoClick("officer")}
                   className="w-full py-2.5 px-3 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 text-xs font-bold transition border border-teal-500/30 flex items-center justify-between"
                 >
                   <div className="flex items-center space-x-2">
@@ -154,7 +166,7 @@ export const LoginPage: React.FC = () => {
 
                 <button
                   type="button"
-                  onClick={() => handleDemoClick('citizen')}
+                  onClick={() => handleDemoClick("citizen")}
                   className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition border border-slate-700 flex items-center justify-between"
                 >
                   <div className="flex items-center space-x-2">
@@ -172,8 +184,12 @@ export const LoginPage: React.FC = () => {
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
                 <div>
-                  <h3 className="text-lg font-black text-white">Sign In to Your Account</h3>
-                  <p className="text-xs text-slate-400">Enter your credentials to continue</p>
+                  <h3 className="text-lg font-black text-white">
+                    Sign In to Your Account
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Enter your credentials to continue
+                  </p>
                 </div>
                 <Link
                   to="/register"
@@ -223,7 +239,7 @@ export const LoginPage: React.FC = () => {
                   <div className="relative">
                     <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                     <input
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       required
                       placeholder="••••••••"
                       value={password}
@@ -239,7 +255,11 @@ export const LoginPage: React.FC = () => {
                       className="absolute right-3 top-3.5 text-slate-400 hover:text-white"
                       aria-label="Toggle password visibility"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -264,7 +284,10 @@ export const LoginPage: React.FC = () => {
 
             <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
               <span>National Environmental Monitoring Portal</span>
-              <Link to="/register" className="text-teal-400 font-bold hover:underline">
+              <Link
+                to="/register"
+                className="text-teal-400 font-bold hover:underline"
+              >
                 Create Account →
               </Link>
             </div>
