@@ -14,35 +14,21 @@ export const ThemeSelector: React.FC = () => {
     icon: any;
     previewColors: string[];
   }[] = [
-    {
-      id: 'clean-light',
-      name: 'Clean Light Eco (Default)',
-      description: 'Crisp pearl white & slate-900 high clarity presentation theme',
-      icon: Sun,
-      previewColors: ['#f8fafc', '#059669', '#2563eb'],
-    },
-    {
-      id: 'dark-slate',
-      name: 'Dark Eco Slate',
-      description: 'Deep midnight slate with radiant teal & emerald accents',
-      icon: Moon,
-      previewColors: ['#0f172a', '#14b8a6', '#06b6d4'],
-    },
-    {
-      id: 'deep-forest',
-      name: 'Deep Forest Emerald',
-      description: 'Rich dark pine and high-saturation bio-green environmental palette',
-      icon: TreePine,
-      previewColors: ['#022c22', '#10b981', '#34d399'],
-    },
-    {
-      id: 'cyber-neon',
-      name: 'Cyber Neon Matrix',
-      description: 'High-tech sci-fi black with glowing neon cyan & purple lasers',
-      icon: Zap,
-      previewColors: ['#030712', '#00f0ff', '#a855f7'],
-    },
-  ];
+      {
+        id: 'clean-light',
+        name: 'Clean Light Eco (Default)',
+        description: 'Crisp pearl white & slate-900 high clarity presentation theme',
+        icon: Sun,
+        previewColors: ['#f8fafc', '#059669', '#2563eb'],
+      },
+      {
+        id: 'dark-slate',
+        name: 'Dark Eco Slate',
+        description: 'Deep midnight slate with radiant teal & emerald accents',
+        icon: Moon,
+        previewColors: ['#0f172a', '#14b8a6', '#06b6d4'],
+      }
+    ];
 
   const currentThemeObj = themeOptions.find((t) => t.id === theme) || themeOptions[0];
   const CurrentIcon = currentThemeObj.icon;
@@ -93,19 +79,17 @@ export const ThemeSelector: React.FC = () => {
                       setTheme(opt.id);
                       setIsOpen(false);
                     }}
-                    className={`w-full p-2.5 rounded-xl text-left transition flex items-center justify-between ${
-                      isSelected
+                    className={`w-full p-2.5 rounded-xl text-left transition flex items-center justify-between ${isSelected
                         ? 'bg-teal-500/15 text-white border border-teal-500/40'
                         : 'hover:bg-slate-800 text-slate-300'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start space-x-2.5">
                       <div
-                        className={`p-2 rounded-lg mt-0.5 ${
-                          isSelected
+                        className={`p-2 rounded-lg mt-0.5 ${isSelected
                             ? 'bg-teal-500 text-slate-950'
                             : 'bg-slate-800 text-slate-400'
-                        }`}
+                          }`}
                       >
                         <Icon className="w-3.5 h-3.5" />
                       </div>

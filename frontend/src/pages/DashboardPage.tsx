@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   Wind,
@@ -7,11 +7,8 @@ import {
   FileWarning,
   Sparkles,
   ArrowRight,
+  RefreshCw,
   TrendingUp,
-  ShieldCheck,
-  Zap,
-  Activity,
-  HeartPulse,
 } from 'lucide-react';
 import { StatCard } from '../components/common/StatCard';
 import { AlertBanner } from '../components/common/AlertBanner';
@@ -23,132 +20,163 @@ import { ComplaintCard } from '../components/complaints/ComplaintCard';
 import { InteractiveLeafletMap } from '../components/map/InteractiveLeafletMap';
 import { Link } from 'react-router-dom';
 import { getAqiBadgeStyle, getAqiCategory, getNoiseBadgeStyle } from '../utils/helpers';
+import { fetchForecast, ForecastResponse } from '../services/api/airQualityService';
 
 export const DashboardPage: React.FC = () => {
   const {
     selectedCity,
     selectedPocket,
     complaints,
-    noiseHotspots,
-    activeAlertCount,
     dismissAlert,
     dismissedAlerts,
   } = useApp();
 
-  const aqiBadge = getAqiBadgeStyle(getAqiCategory(selectedCity.currentAqi));
+  const [liveForecast, setLiveForecast] = useState<ForecastResponse | null>(null);
+  const [loadingForecast, setLoadingForecast] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadLiveCityData = async () => {
+      setLoadingForecast(true);
+      try {
+        const res = await fetchForecast(selectedCity.name);
+        if (isMounted) {
+          setLiveForecast(res);
+        }
+      } catch {
+        // Fallback gracefully to default state
+      } finally {
+        if (isMounted) {
+          setLoadingForecast(false);
+        }
+      }
+    };
+
+    loadLiveCityData();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedCity.name]);
+
+  const currentAqi = liveForecast?.current?.cpcb_aqi ?? selectedCity.currentAqi;
+  const currentCategory = liveForecast?.current?.category ?? selectedCity.category;
+  const aqiBadge = getAqiBadgeStyle(getAqiCategory(currentAqi));
   const noiseBadge = getNoiseBadgeStyle(selectedCity.currentNoise);
 
   const cityHotspotsCount = selectedCity.pockets.filter((p) => p.isHotspot).length;
   const recentComplaints = complaints.slice(0, 3);
 
+  // Map API hourly records into chart format if available
+  const formattedHourlyForecast = liveForecast?.hourly_forecast?.map((h, idx) => ({
+    time: h.hour,
+    hour: idx + 1,
+    aqi: h.aqi,
+    pm25: h.pm2_5,
+    pm10: h.pm10,
+    confidenceLower: Math.max(10, Math.round(h.aqi * 0.88)),
+    confidenceUpper: Math.round(h.aqi * 1.12),
+    category: getAqiCategory(h.aqi),
+    temp: 28,
+    humidity: 55,
+    windSpeed: 8,
+  }));
+
   return (
-    <div className="space-y-8">
-      {/* Top Banner / SIH Hackathon Header Hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-teal-950/80 via-slate-900/90 to-cyan-950/80 border border-teal-500/30 p-6 sm:p-8 shadow-2xl backdrop-blur-md">
-        <div className="absolute -top-24 -right-24 w-80 h-80 bg-teal-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div>
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="text-[11px] font-extrabold px-3 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/40">
-                SMART INDIA HACKATHON 2026
-              </span>
-              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                Team Carpe diem · NIT Surathkal
-              </span>
-              <span className="text-[11px] font-mono text-emerald-400 flex items-center space-x-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block mr-1"></span>
-                <span>Active Telemetry Online</span>
-              </span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
-              Intelligent Air & Noise Pollution Monitoring and Prediction
-            </h1>
-            <p className="mt-2 text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
-              Addressing urban micro-pocket air pollution and street acoustic noise through multi-sensor data fusion, LSTM deep learning forecasts, CORTN traffic-to-noise models, and verified citizen crowdsourcing.
-            </p>
+    <div className="space-y-6 sm:space-y-8">
+      {/* Executive Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div>
+          <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-teal-400">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Real-Time Environmental Surveillance</span>
           </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-white mt-1">
+            {selectedCity.name} · Urban Intelligence Overview
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+            CPCB NAQI multi-sensor monitoring, Attention Bi-LSTM 24h forecasting, and citizen acoustic telemetry.
+          </p>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              to="/complaints"
-              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-black text-xs transition shadow-lg shadow-teal-500/25 flex items-center space-x-2 whitespace-nowrap"
-            >
-              <FileWarning className="w-4 h-4" />
-              <span>Submit Complaint</span>
-            </Link>
-            <Link
-              to="/reports"
-              className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs transition flex items-center space-x-2 whitespace-nowrap"
-            >
-              <Sparkles className="w-4 h-4 text-purple-400" />
-              <span>AI Authority Report</span>
-            </Link>
-          </div>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            to="/complaints"
+            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs transition flex items-center space-x-2"
+          >
+            <FileWarning className="w-4 h-4 text-amber-400" />
+            <span>Submit Grievance</span>
+          </Link>
+          <Link
+            to="/reports"
+            className="px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition shadow-sm flex items-center space-x-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Generate AI Dossier</span>
+          </Link>
         </div>
       </div>
 
       {/* Priority Health Alerts Banner */}
-      {selectedCity.currentAqi > 200 && !dismissedAlerts.includes('asthma-alert') && (
+      {currentAqi > 200 && !dismissedAlerts.includes('asthma-alert') && (
         <AlertBanner
           id="asthma-alert"
           type="asthma"
-          title={`Asthma Alert for ${selectedCity.name}: AQI ${selectedCity.currentAqi} (${selectedCity.category})`}
-          message="Thermal inversion is trapping fine PM2.5 particulates in urban micro-pockets. High risk for 30M+ Indian asthma patients. Keep rescue inhalers ready and avoid strenuous outdoor exercise."
-          actionText="View Medical Advisory"
+          title={`Asthma Alert for ${selectedCity.name}: AQI ${currentAqi} (${currentCategory})`}
+          message="Thermal inversion is trapping fine particulates in urban corridors. Asthmatic and vulnerable individuals should minimize morning outdoor exposure."
+          actionText="View Detailed Health Advisory"
           actionLink="/air-quality"
           onDismiss={dismissAlert}
         />
       )}
 
       {/* Primary Key Stats Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Current AQI Level"
-          value={selectedCity.currentAqi}
-          subtitle={`Primary: ${selectedCity.primaryPollutant}`}
+          title="Air Quality Index"
+          value={currentAqi}
+          subtitle={`Dominant: ${liveForecast?.current?.prominent_pollutant_display || selectedCity.primaryPollutant}`}
           icon={Wind}
           iconColor="text-teal-400"
           iconBg="bg-teal-500/10 border-teal-500/20"
-          badgeText={selectedCity.category}
+          badgeText={currentCategory}
           badgeColor={`${aqiBadge.bg} ${aqiBadge.text} ${aqiBadge.border}`}
-          trend={{ value: '+14%', isPositive: true, label: 'vs morning baseline' }}
+          trend={{ value: 'Live CPCB', isPositive: currentAqi <= 100, label: 'Official NAQI standard' }}
         />
 
         <StatCard
-          title="Street Noise Index"
+          title="Street Noise Level"
           value={`${selectedCity.currentNoise} dB`}
-          subtitle="CORTN Traffic Virtual Sensor"
+          subtitle="CORTN Virtual Sensor Network"
           icon={Volume2}
           iconColor="text-cyan-400"
           iconBg="bg-cyan-500/10 border-cyan-500/20"
           badgeText={noiseBadge.label.split(' ')[0]}
           badgeColor={`${noiseBadge.bg} ${noiseBadge.text} ${noiseBadge.border}`}
-          trend={{ value: '+8.2 dB', isPositive: true, label: 'during peak rush' }}
+          trend={{ value: 'Peak Rush', isPositive: false, label: 'High decibel variance' }}
         />
 
         <StatCard
           title="Active Hotspot Zones"
           value={cityHotspotsCount}
-          subtitle="Micro-pockets flagged by AI"
+          subtitle="DBSCAN Clustered Micro-Pockets"
           icon={MapPin}
           iconColor="text-amber-400"
           iconBg="bg-amber-500/10 border-amber-500/20"
-          badgeText="DBSCAN Clustered"
+          badgeText={`${cityHotspotsCount} Pockets`}
           badgeColor="bg-amber-500/20 text-amber-300 border-amber-500/30"
-          trend={{ value: '3 Active', isPositive: false, label: 'in inspection queue' }}
+          trend={{ value: 'Monitored', isPositive: true, label: 'Autonomous clustering' }}
         />
 
         <StatCard
-          title="Citizen Complaints"
+          title="Citizen Grievances"
           value={complaints.length}
-          subtitle="AI Verified with Evidence"
+          subtitle="Crowdsourced Geotagged Reports"
           icon={FileWarning}
           iconColor="text-purple-400"
           iconBg="bg-purple-500/10 border-purple-500/20"
           badgeText="94% Credibility"
           badgeColor="bg-purple-500/20 text-purple-300 border-purple-500/30"
-          trend={{ value: '+4 new', isPositive: true, label: 'in last 2 hours' }}
+          trend={{ value: 'Validated', isPositive: true, label: 'AI multimodal triage' }}
         />
       </div>
 
@@ -158,39 +186,39 @@ export const DashboardPage: React.FC = () => {
           <AqiHeroCard city={selectedCity} pocket={selectedPocket} />
         </div>
         <div className="lg:col-span-6">
-          <Forecast24HourChart />
+          <Forecast24HourChart data={formattedHourlyForecast} />
         </div>
       </div>
 
       {/* Pollutant Composition Grid */}
       <PollutantGrid />
 
-      {/* Noise Monitoring Snapshot & Mini Map Preview */}
+      {/* Noise Monitoring & Hotspot Map Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        <div className="lg:col-span-6 flex flex-col justify-between">
+        <div className="lg:col-span-6">
           <NoiseHeroCard city={selectedCity} />
         </div>
 
-        {/* Mini Interactive Map Preview Card */}
-        <div className="lg:col-span-6 rounded-3xl bg-slate-900/80 border border-slate-800/80 p-6 shadow-xl backdrop-blur-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-4">
+        {/* Interactive Map Preview Card */}
+        <div className="lg:col-span-6 rounded-3xl bg-slate-900 border border-slate-800 p-6 shadow-xl flex flex-col justify-between">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
             <div>
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4 text-teal-400" />
-                <span className="text-xs font-bold uppercase tracking-widest text-teal-400">
-                  Geospatial Surveillance
+                <span className="text-xs font-bold uppercase tracking-wider text-teal-400">
+                  Geospatial Intelligence
                 </span>
               </div>
-              <h3 className="text-lg font-extrabold text-white mt-0.5">
-                Live Hotspot & Evidence Map
+              <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
+                Live Hotspot &amp; Telemetry Map
               </h3>
             </div>
 
             <Link
               to="/hotspots"
-              className="flex items-center space-x-1.5 text-xs font-bold text-teal-400 hover:text-teal-300 hover:underline"
+              className="flex items-center space-x-1 text-xs font-bold text-teal-400 hover:text-teal-300 transition"
             >
-              <span>Full Screen Map</span>
+              <span>Full Screen</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -206,23 +234,23 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Recent Citizen Complaints Feed */}
-      <div className="rounded-3xl bg-slate-900/80 border border-slate-800/80 p-6 shadow-xl backdrop-blur-sm">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-5">
+      <div className="rounded-3xl bg-slate-900 border border-slate-800 p-6 shadow-xl">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
           <div>
             <div className="flex items-center space-x-2">
               <FileWarning className="w-4 h-4 text-amber-400" />
-              <span className="text-xs font-bold uppercase tracking-widest text-amber-400">
-                Citizen Participation Feed
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                Citizen Grievance Feed
               </span>
             </div>
-            <h3 className="text-lg font-extrabold text-white mt-0.5">
-              Recent High-Confidence Citizen Evidence
+            <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
+              Recent Verified Incident Reports
             </h3>
           </div>
 
           <Link
             to="/complaints"
-            className="flex items-center space-x-1.5 text-xs font-bold text-teal-400 hover:text-teal-300 hover:underline"
+            className="flex items-center space-x-1 text-xs font-bold text-teal-400 hover:text-teal-300 transition"
           >
             <span>View All ({complaints.length})</span>
             <ArrowRight className="w-3.5 h-3.5" />
