@@ -101,7 +101,10 @@ CNN_CLASSES = sorted([
 IMG_SIZE = (128, 128)
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(_HERE, "..", "pollution_sound_mobilenetv2.h5")
+# Keep the inference path next to the other persisted ML artifacts.  The
+# previous parent-directory path pointed at ``models/pollution_sound...`` and
+# therefore prevented the API from loading the checked-in saved model.
+MODEL_PATH = os.path.join(_HERE, "saved_models", "pollution_sound_mobilenetv2.h5")
 
 _model = None
 _model_loaded: bool = False
