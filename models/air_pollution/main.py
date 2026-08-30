@@ -28,7 +28,7 @@ from data_fetcher import (
     get_48h_history,
     get_default_api_key
 )
-from health_advisor import get_health_advisory, get_persona_advisory
+from health_advisor import get_health_advisory
 from models import HybridEnsembleForecaster
 
 # Initialize FastAPI Application
