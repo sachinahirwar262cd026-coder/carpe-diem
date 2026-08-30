@@ -13,5 +13,13 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    proxy: {
+      // Forward all /api/* calls to the backend gateway
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 });

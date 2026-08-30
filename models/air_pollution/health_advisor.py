@@ -6,14 +6,20 @@ and diurnal peak pollution window analysis for Indian citizens, authorities,
 and sensitive vulnerable groups.
 """
 
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 
-def get_health_advisory(aqi: int, prominent_pollutant: str, peak_hour_info: Dict[str, Any]) -> Dict[str, Any]:
+def get_health_advisory(aqi: int, prominent_pollutant: str = "pm2_5", peak_hour_info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Generates tailored, actionable health advisories based on Indian NAQI guidelines,
     CPCB health advisory matrix, and GRAP emergency stages.
     """
+    if peak_hour_info is None:
+        peak_hour_info = {
+            "peak_aqi": aqi,
+            "peak_hour": "+0h",
+            "reason": "Standard diurnal pattern"
+        }
     if aqi <= 50:
         category = "Good"
         color = "#10B981"

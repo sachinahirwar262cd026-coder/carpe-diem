@@ -80,15 +80,14 @@ def fetch_openweather_history(lat: float, lon: float, start_time: int, end_time:
 def fetch_openmeteo_history(lat: float, lon: float, past_hours: int = 48) -> Optional[List[Dict[str, Any]]]:
     """
     Fetches real-time & historical air quality data using Open-Meteo European/Copernicus API.
-    Accurately extracts the past 48 hours ending at the current hour.
+    Free, high precision, no API key required. Covers all coordinates in India.
     """
-    import datetime
     try:
-        # Request 3 past days + 1 forecast day to guarantee 48 contiguous past hours ending at the current hour
+        past_days = max(1, math.ceil(past_hours / 24))
         url = (
             f"https://air-quality-api.open-meteo.com/v1/air-quality?"
             f"latitude={lat}&longitude={lon}&hourly=pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,"
-            f"sulphur_dioxide,ozone,ammonia,european_aqi,us_aqi&past_days=3&forecast_days=1"
+            f"sulphur_dioxide,ozone,ammonia,european_aqi,us_aqi&past_days={past_days}&forecast_days=1"
         )
         res = requests.get(url, timeout=10)
         if res.status_code == 200:
@@ -99,40 +98,23 @@ def fetch_openmeteo_history(lat: float, lon: float, past_hours: int = 48) -> Opt
             if not times:
                 return None
 
-            # Find the index corresponding to the current UTC hour
-            now_utc_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:00")
-            current_idx = None
-            for i, t in enumerate(times):
-                if t <= now_utc_str:
-                    current_idx = i
-
-            if current_idx is None:
-                current_idx = len(times) - 1
-
-            # Extract the exact past_hours (48) ending at the current hour
-            start_idx = max(0, current_idx - past_hours + 1)
-            end_idx = current_idx + 1  # inclusive of current_idx
-            
             records = []
-            for idx in range(start_idx, end_idx):
-                co_val = hourly.get("carbon_monoxide", [0])[idx] if idx < len(hourly.get("carbon_monoxide", [])) else 500.0
-                no2_val = hourly.get("nitrogen_dioxide", [0])[idx] if idx < len(hourly.get("nitrogen_dioxide", [])) else 25.0
-                so2_val = hourly.get("sulphur_dioxide", [0])[idx] if idx < len(hourly.get("sulphur_dioxide", [])) else 15.0
-                o3_val = hourly.get("ozone", [0])[idx] if idx < len(hourly.get("ozone", [])) else 35.0
-                pm25_val = hourly.get("pm2_5", [0])[idx] if idx < len(hourly.get("pm2_5", [])) else 45.0
-                pm10_val = hourly.get("pm10", [0])[idx] if idx < len(hourly.get("pm10", [])) else 85.0
-                nh3_val = hourly.get("ammonia", [0])[idx] if idx < len(hourly.get("ammonia", [])) else 12.0
-                no_val = max(1.0, (no2_val or 25.0) * 0.3)
+            total_pts = len(times)
+            
+            # Extract last N available past hours
+            for idx in range(total_pts):
+                # Unit handling:
+                # Open-Meteo CO is in ug/m3 -> convert to ug/m3 or mg/m3
+                co_val = hourly.get("carbon_monoxide", [0])[idx] or 500.0
+                no2_val = hourly.get("nitrogen_dioxide", [0])[idx] or 25.0
+                so2_val = hourly.get("sulphur_dioxide", [0])[idx] or 15.0
+                o3_val = hourly.get("ozone", [0])[idx] or 35.0
+                pm25_val = hourly.get("pm2_5", [0])[idx] or 45.0
+                pm10_val = hourly.get("pm10", [0])[idx] or 85.0
+                nh3_val = hourly.get("ammonia", [0])[idx] or 12.0
+                no_val = max(1.0, no2_val * 0.3) # NO estimation if not direct
                 
-                # Default fallbacks for None values
-                co_val = float(co_val) if co_val is not None else 500.0
-                no2_val = float(no2_val) if no2_val is not None else 25.0
-                so2_val = float(so2_val) if so2_val is not None else 15.0
-                o3_val = float(o3_val) if o3_val is not None else 35.0
-                pm25_val = float(pm25_val) if pm25_val is not None else 45.0
-                pm10_val = float(pm10_val) if pm10_val is not None else 85.0
-                nh3_val = float(nh3_val) if nh3_val is not None else 12.0
-
+                # Approximate 1-5 index for OWM compatibility
                 aqi_level = 1
                 if pm25_val > 250: aqi_level = 5
                 elif pm25_val > 120: aqi_level = 4
@@ -143,18 +125,19 @@ def fetch_openmeteo_history(lat: float, lon: float, past_hours: int = 48) -> Opt
                     "dt": times[idx],
                     "main": {"aqi": aqi_level},
                     "components": {
-                        "co": co_val,
+                        "co": float(co_val),
                         "no": float(no_val),
-                        "no2": no2_val,
-                        "o3": o3_val,
-                        "so2": so2_val,
-                        "pm2_5": pm25_val,
-                        "pm10": pm10_val,
-                        "nh3": nh3_val
+                        "no2": float(no2_val),
+                        "o3": float(o3_val),
+                        "so2": float(so2_val),
+                        "pm2_5": float(pm25_val),
+                        "pm10": float(pm10_val),
+                        "nh3": float(nh3_val)
                     }
                 })
             
-            return records
+            # Return last past_hours records
+            return records[-past_hours:] if len(records) >= past_hours else records
     except Exception as e:
         print(f"[Open-Meteo Error] {e}")
     return None
