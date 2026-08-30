@@ -29,10 +29,13 @@ import {
 } from 'recharts';
 import { SAMPLE_NOISE_PRESETS, analyzeNoiseEvidence } from '../../services/api/evidenceService';
 import { NoiseAnalysisResult } from '../../types';
+import { useGeolocation } from '../../hooks/useGeolocation';
+import { reverseGeocode } from '../../services/api/geocodingService';
 import confetti from 'canvas-confetti';
 
 export const NoiseEvidencePage: React.FC = () => {
-  const { selectedCity, addComplaint } = useApp();
+  const { selectedCity, setSelectedCityId, setUserGpsLocation, addComplaint } = useApp();
+  const geo = useGeolocation(false);
 
   const [mode, setMode] = useState<'record' | 'upload' | 'preset'>('record');
   const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -45,12 +48,39 @@ export const NoiseEvidencePage: React.FC = () => {
   const [locationName, setLocationName] = useState<string>(
     `${selectedCity.pockets[0]?.name || selectedCity.name}, ${selectedCity.state}`
   );
+  const [gpsLoading, setGpsLoading] = useState<boolean>(false);
   const [description, setDescription] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysisStep, setAnalysisStep] = useState<string>('');
   const [analysisResult, setAnalysisResult] = useState<NoiseAnalysisResult | null>(null);
   const [isComplaintFiled, setIsComplaintFiled] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  const handleFetchGpsLocation = async () => {
+    setGpsLoading(true);
+    try {
+      const pos = await geo.getPosition();
+      const geoInfo = await reverseGeocode(pos.lat, pos.lng);
+      setLocationName(geoInfo.displayName);
+
+      setUserGpsLocation({
+        lat: pos.lat,
+        lng: pos.lng,
+        accuracy: pos.accuracy,
+        placeName: geoInfo.displayName,
+      });
+
+      if (geoInfo.nearestMonitoredCityId) {
+        setSelectedCityId(geoInfo.nearestMonitoredCityId);
+      }
+    } catch {
+      if (geo.lat && geo.lng) {
+        setLocationName(`${geo.lat.toFixed(5)}°N, ${geo.lng.toFixed(5)}°E (Location name unavailable)`);
+      }
+    } finally {
+      setGpsLoading(false);
+    }
+  };
 
   // Live recording timer
   useEffect(() => {
@@ -468,15 +498,21 @@ export const NoiseEvidencePage: React.FC = () => {
                 </label>
                 <button
                   type="button"
-                  onClick={() =>
-                    setLocationName(
-                      `${selectedCity.pockets[0]?.name || selectedCity.name}, ${selectedCity.state}`
-                    )
-                  }
-                  className="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center space-x-1"
+                  onClick={handleFetchGpsLocation}
+                  disabled={gpsLoading}
+                  className="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center space-x-1 disabled:opacity-50"
                 >
-                  <MapPin className="w-3 h-3" />
-                  <span>Use Active City</span>
+                  {gpsLoading ? (
+                    <>
+                      <div className="w-2.5 h-2.5 border border-cyan-500 border-t-transparent rounded-full animate-spin" />
+                      <span>Fetching GPS...</span>
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="w-3 h-3" />
+                      <span>Use Device GPS Location</span>
+                    </>
+                  )}
                 </button>
               </div>
               <input

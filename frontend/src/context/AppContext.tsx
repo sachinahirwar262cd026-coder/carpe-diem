@@ -4,12 +4,21 @@ import { CITIES_DATA } from '../data/mockAqiData';
 import { INITIAL_MOCK_COMPLAINTS } from '../data/mockComplaints';
 import { MOCK_NOISE_HOTSPOTS } from '../data/mockNoiseData';
 
+export interface UserGpsInfo {
+  lat: number;
+  lng: number;
+  accuracy: number;
+  placeName: string;
+}
+
 interface AppContextType {
   cities: CityData[];
   selectedCity: CityData;
   setSelectedCityId: (id: string) => void;
   selectedPocket: MicroPocket | null;
   setSelectedPocket: (pocket: MicroPocket | null) => void;
+  userGpsLocation: UserGpsInfo | null;
+  setUserGpsLocation: (loc: UserGpsInfo | null) => void;
   complaints: CitizenComplaint[];
   addComplaint: (newComplaint: Omit<CitizenComplaint, 'id' | 'trackingNumber' | 'timestamp' | 'status' | 'citizenCredibility'>) => CitizenComplaint;
   noiseHotspots: NoiseHotspot[];
@@ -29,7 +38,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<AppTheme>('clean-light');
   const [cities] = useState<CityData[]>(CITIES_DATA);
-  const [selectedCityId, setSelectedCityId] = useState<string>('delhi');
+  const [selectedCityId, setSelectedCityId] = useState<string>('mangalore-nitk');
+  const [userGpsLocation, setUserGpsLocation] = useState<UserGpsInfo | null>(null);
   const [complaints, setComplaints] = useState<CitizenComplaint[]>(INITIAL_MOCK_COMPLAINTS);
   const [noiseHotspots] = useState<NoiseHotspot[]>(MOCK_NOISE_HOTSPOTS);
   const [liveUpdatesEnabled, setLiveUpdatesEnabled] = useState<boolean>(true);
@@ -103,6 +113,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSelectedCityId,
         selectedPocket,
         setSelectedPocket,
+        userGpsLocation,
+        setUserGpsLocation,
         complaints,
         addComplaint,
         noiseHotspots,

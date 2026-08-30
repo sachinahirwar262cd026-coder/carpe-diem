@@ -19,8 +19,11 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
+import { useGeolocation } from '../../hooks/useGeolocation';
+import { reverseGeocode } from '../../services/api/geocodingService';
 import { getAqiBadgeStyle, getAqiCategory } from '../../utils/helpers';
 import { ThemeSelector } from '../common/ThemeSelector';
+import { Crosshair } from 'lucide-react';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -31,6 +34,8 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
     cities,
     selectedCity,
     setSelectedCityId,
+    userGpsLocation,
+    setUserGpsLocation,
     liveUpdatesEnabled,
     setLiveUpdatesEnabled,
     lastUpdated,
@@ -38,6 +43,29 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   } = useApp();
 
   const { user, logout, activePortal, setActivePortal } = useAuth();
+  const geo = useGeolocation(false);
+  const [gpsDetecting, setGpsDetecting] = useState<boolean>(false);
+
+  const handleHeaderDetectGps = async () => {
+    setGpsDetecting(true);
+    try {
+      const pos = await geo.getPosition();
+      const geoInfo = await reverseGeocode(pos.lat, pos.lng);
+      setUserGpsLocation({
+        lat: pos.lat,
+        lng: pos.lng,
+        accuracy: pos.accuracy,
+        placeName: geoInfo.displayName,
+      });
+      if (geoInfo.nearestMonitoredCityId) {
+        setSelectedCityId(geoInfo.nearestMonitoredCityId);
+      }
+    } catch {
+      // Ignored if user cancels
+    } finally {
+      setGpsDetecting(false);
+    }
+  };
   const navigate = useNavigate();
 
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
@@ -95,9 +123,20 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
                 onClick={() => setIsCityDropdownOpen(false)}
               />
               <div className="absolute left-0 mt-2 w-72 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  Select Monitoring Region
-                </p>
+                <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-800 mb-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    Select Monitoring Region
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleHeaderDetectGps}
+                    disabled={gpsDetecting}
+                    className="text-[10px] font-bold text-teal-400 hover:text-teal-300 flex items-center space-x-1"
+                  >
+                    <Crosshair className={`w-3 h-3 ${gpsDetecting ? 'animate-spin' : ''}`} />
+                    <span>{gpsDetecting ? 'Locating...' : 'Auto-Detect GPS'}</span>
+                  </button>
+                </div>
                 {cities.map((city) => {
                   const badge = getAqiBadgeStyle(getAqiCategory(city.currentAqi));
                   const isSelected = city.id === selectedCity.id;
