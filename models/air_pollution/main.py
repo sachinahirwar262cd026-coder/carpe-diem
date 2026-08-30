@@ -9,6 +9,8 @@ Endpoints:
   POST /api/generate-report
   GET  /api/model-info
   GET  /api/cpcb-scale
+  POST /api/noise/classify-sound
+  GET  /api/noise/sound-taxonomy
 """
 
 import os
@@ -18,7 +20,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, List, Any, Optional
 from pydantic import BaseModel, Field
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
@@ -286,6 +288,52 @@ async def get_city_corridors_noise(city: str = Query("Delhi", description="City 
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"City noise corridors error: {str(e)}")
+
+
+# ── Sound Classification (CNN / MobileNetV2) ──────────────────────────────────
+from sound_classifier import predict as cnn_predict, get_taxonomy as cnn_taxonomy
+
+
+@app.post("/api/noise/classify-sound")
+async def classify_sound(
+    file: UploadFile = File(..., description="Mel-spectrogram image (PNG or JPEG)")
+):
+    """
+    Accept a Mel-spectrogram image from the frontend, run MobileNetV2 CNN
+    inference, and return the main sound category + sub-label + confidence.
+
+    Main categories:
+      Traffic | Environmental | Industrial | Human_Activity | Construction
+
+    Sub-labels (examples):
+      car_horn, engine, siren, train, helicopter (Traffic)
+      rain, sea_waves, crackling_fire … (Environmental)
+      chainsaw, drilling, vacuum_cleaner … (Industrial)
+      clapping, coughing, crying_baby … (Human_Activity)
+      jackhammer, glass_breaking, fireworks … (Construction)
+    """
+    allowed_types = {"image/png", "image/jpeg", "image/jpg", "image/webp"}
+    if file.content_type and file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported media type '{file.content_type}'. Send PNG or JPEG spectrogram."
+        )
+
+    image_bytes = await file.read()
+    if len(image_bytes) == 0:
+        raise HTTPException(status_code=400, detail="Empty file received.")
+
+    result = cnn_predict(image_bytes)
+    return result
+
+
+@app.get("/api/noise/sound-taxonomy")
+async def get_sound_taxonomy():
+    """
+    Returns the full ESC-50 taxonomy: main categories and their sub-labels,
+    plus which classes the CNN was actually trained on.
+    """
+    return cnn_taxonomy()
 
 # ── Model info ────────────────────────────────────────────────────────────────
 @app.get("/api/model-info")
