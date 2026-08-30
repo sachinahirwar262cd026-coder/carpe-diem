@@ -13,7 +13,6 @@ import { StatCard } from '../components/common/StatCard';
 import { AqiHeroCard } from '../components/aqi/AqiHeroCard';
 import { Forecast24HourChart } from '../components/aqi/Forecast24HourChart';
 import { PollutantGrid } from '../components/aqi/PollutantGrid';
-import { NoiseHeroCard } from '../components/noise/NoiseHeroCard';
 import { InteractiveLeafletMap } from '../components/map/InteractiveLeafletMap';
 import { AqiTrendAnalytics } from '../components/analytics/AqiTrendAnalytics';
 import { NoiseTrendAnalytics } from '../components/analytics/NoiseTrendAnalytics';
@@ -38,7 +37,7 @@ export const DashboardPage: React.FC = () => {
       .then((res) => {
         if (isMounted) setLiveForecast(res);
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       isMounted = false;
     };
@@ -103,7 +102,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Primary Key Stats Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           title="Air Quality Index"
           value={currentAqi}
@@ -116,7 +115,7 @@ export const DashboardPage: React.FC = () => {
           trend={{ value: 'Live CPCB', isPositive: currentAqi <= 100, label: 'NAQI Standard' }}
         />
 
-        <StatCard
+        {/* <StatCard
           title="Street Noise Level"
           value={`${selectedCity.currentNoise} dB`}
           subtitle="CORTN Virtual Sensor Network"
@@ -126,7 +125,7 @@ export const DashboardPage: React.FC = () => {
           badgeText={noiseBadge.label.split(' ')[0]}
           badgeColor={`${noiseBadge.bg} ${noiseBadge.text} ${noiseBadge.border}`}
           trend={{ value: 'Peak Rush', isPositive: false, label: 'Decibel Variance' }}
-        />
+        /> */}
 
         <StatCard
           title="Active Hotspot Zones"
@@ -172,76 +171,7 @@ export const DashboardPage: React.FC = () => {
       {/* Pollutant Composition Grid */}
       <PollutantGrid liveConcentrations={liveForecast?.current?.concentrations} />
 
-      {/* Noise Monitoring & Hotspot Map Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        <div className="lg:col-span-6">
-          <NoiseHeroCard city={selectedCity} />
-        </div>
 
-        {/* Interactive Map Preview Card */}
-        <div className="lg:col-span-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
-            <div>
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4 text-emerald-600 dark:text-teal-400" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-teal-400">
-                  Geospatial Surveillance
-                </span>
-              </div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5">
-                Live Hotspot &amp; Sensor Telemetry Map
-              </h3>
-            </div>
-
-            <Link
-              to="/hotspots"
-              className="flex items-center space-x-1 text-xs font-semibold text-emerald-600 dark:text-teal-400 hover:underline transition"
-            >
-              <span>Full Screen</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="h-72 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
-            <InteractiveLeafletMap
-              showAirHotspots={true}
-              showNoiseHotspots={true}
-              showComplaints={true}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* ── INTEGRATED ANALYTICS & DEEP MODELS SECTION ── */}
-      <div className="space-y-6 pt-4 border-t border-slate-200 dark:border-slate-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <BarChart3 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-              Empirical Trends &amp; ML Model Analytics
-            </h2>
-          </div>
-          <span className="text-xs font-mono font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-200 dark:border-indigo-500/30">
-            Validation Benchmark
-          </span>
-        </div>
-
-        {/* 7-Day Historical vs Predicted AQI Trend */}
-        <AqiTrendAnalytics />
-
-        {/* 2-Column: Noise Diurnal Correlation & Pollutant Radar Fingerprint */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-6">
-            <NoiseTrendAnalytics />
-          </div>
-          <div className="lg:col-span-6">
-            <PollutantRadarChart />
-          </div>
-        </div>
-
-        {/* Machine Learning Model Benchmark Metrics */}
-        <ModelPerformanceCard />
-      </div>
     </div>
   );
 };

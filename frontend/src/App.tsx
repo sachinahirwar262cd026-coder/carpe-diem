@@ -9,7 +9,6 @@ import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { AirEvidencePage } from './pages/citizen/AirEvidencePage';
 import { NoiseEvidencePage } from './pages/citizen/NoiseEvidencePage';
-import { NoiseMonitoringPage } from './pages/NoiseMonitoringPage';
 import { HotspotMapPage } from './pages/HotspotMapPage';
 import { SubmitComplaintPage } from './pages/SubmitComplaintPage';
 import { AiReportsPage } from './pages/AiReportsPage';
@@ -40,7 +39,6 @@ export const App: React.FC = () => {
               <Route path="analytics" element={<Navigate to="/" replace />} />
 
               {/* Core Modules */}
-              <Route path="noise-monitoring" element={<NoiseMonitoringPage />} />
               <Route path="hotspots" element={<HotspotMapPage />} />
               <Route path="complaints" element={<SubmitComplaintPage />} />
               <Route path="reports" element={<AiReportsPage />} />
