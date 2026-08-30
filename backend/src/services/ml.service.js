@@ -30,4 +30,30 @@ const getPollutionPrediction = async (latitude, longitude) => {
   return response.json();
 };
 
-export default { getPollutionPrediction };
+/**
+ * Forwards a noise complaint's spectrogram image URL + location to the noise classification model.
+ * Since the image now lives on Cloudinary, we just send the URL - the model server fetches it itself.
+ * @param {string} imageUrl - Cloudinary secure URL of the spectrogram image
+ * @param {{latitude: number, longitude: number}} location
+ * @returns {Promise<Object>} raw model response
+ */
+const getNoiseComplaintAnalysis = async (imageUrl, location) => {
+  const response = await fetch(NOISE_COMPLAINT_MODEL_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      imageUrl,
+      latitude: location.latitude,
+      longitude: location.longitude,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Noise complaint model request failed (${response.status}): ${errorText}`);
+  }
+
+  return response.json();
+};
+
+export default { getPollutionPrediction, getNoiseComplaintAnalysis };
