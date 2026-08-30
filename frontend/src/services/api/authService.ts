@@ -1,14 +1,16 @@
-const AUTH_BASE = import.meta.env.VITE_AUTH_BASE_URL || "http://localhost:5000";
+const AUTH_BASE = import.meta.env.VITE_AUTH_BASE_URL || "";
 
 export interface AuthResponseUser {
   id: string;
   name: string;
   email: string;
-  phone?: string;
+  phone?: string | null;
   role?: string;
   organization?: string;
   citizenCredibility?: number;
+  credibilityScore?: number;
   isSensitiveGroup?: boolean;
+  createdAt?: string;
 }
 
 export interface AuthResponsePayload {
@@ -34,18 +36,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
+  if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const response = await fetch(`${AUTH_BASE}${path}`, {
     ...options,
     headers,
     credentials: "include",
   });
-
   const payload = await response.json().catch(() => ({}));
-
   if (!response.ok) {
     throw new Error(
       payload?.message ||
@@ -53,7 +51,6 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
         `Request failed (${response.status})`,
     );
   }
-
   return payload as T;
 }
 
@@ -76,10 +73,7 @@ export async function signupUser(data: {
       phone: data.mobile,
     }),
   });
-
-  if (payload.data?.token) {
-    setStoredToken(payload.data.token);
-  }
+  if (payload.data?.token) setStoredToken(payload.data.token);
   return payload.data;
 }
 
@@ -90,25 +84,17 @@ export async function loginUser(data: { email: string; password: string }) {
     data?: AuthResponsePayload;
   }>("/api/auth/login", {
     method: "POST",
-    body: JSON.stringify({
-      email: data.email,
-      password: data.password,
-    }),
+    body: JSON.stringify(data),
   });
-
-  if (payload.data?.token) {
-    setStoredToken(payload.data.token);
-  }
+  if (payload.data?.token) setStoredToken(payload.data.token);
   return payload.data;
 }
 
 export async function logoutUser() {
   try {
-    await request<{ success: boolean; message?: string }>("/api/auth/logout", {
-      method: "POST",
-    });
+    await request<{ success: boolean }>("/api/auth/logout", { method: "POST" });
   } catch {
-    // Ignore logout failures; clear local state anyway.
+    // The backend logout route is protected; local logout must still succeed.
   } finally {
     clearStoredToken();
   }

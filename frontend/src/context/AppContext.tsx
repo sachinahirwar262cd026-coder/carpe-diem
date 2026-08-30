@@ -14,6 +14,13 @@ import {
 } from "../types";
 import { INITIAL_MOCK_COMPLAINTS } from "../data/mockComplaints";
 import { fetchCities } from "../services/api/airQualityService";
+import { useAuth } from "./AuthContext";
+import {
+  backendComplaintToFrontend,
+  fetchMyComplaintsApi,
+  updateComplaintStatusApi,
+} from "../services/api/complaintService";
+import { fetchCityNoiseCorridors } from "../services/api/noiseService";
 
 const fallbackCity = (
   name = "Delhi NCR",
@@ -82,7 +89,8 @@ interface AppContextType {
       "id" | "trackingNumber" | "timestamp" | "status" | "citizenCredibility"
     >,
   ) => CitizenComplaint;
-  resolveComplaint: (id: string) => void;
+  addPersistedComplaint: (complaint: CitizenComplaint) => void;
+  resolveComplaint: (id: string) => Promise<void>;
   noiseHotspots: NoiseHotspot[];
   liveUpdatesEnabled: boolean;
   setLiveUpdatesEnabled: React.Dispatch<React.SetStateAction<boolean>>;
@@ -131,6 +139,7 @@ const matchesCityId = (cityId: string, targetId: string) => {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const { user, token } = useAuth();
   const [theme, setThemeState] = useState<AppTheme>(() => {
     const saved = localStorage.getItem("app_theme");
     return (saved as AppTheme) || "dark-slate";
@@ -165,19 +174,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [userGpsLocation, setUserGpsLocation] = useState<UserGpsInfo | null>(
     null,
   );
-  const [complaints, setComplaints] = useState<CitizenComplaint[]>(() => {
-    try {
-      const saved = localStorage.getItem("citizen_complaints");
-      return saved ? JSON.parse(saved) : INITIAL_MOCK_COMPLAINTS;
-    } catch {
-      return INITIAL_MOCK_COMPLAINTS;
-    }
-  });
-  const [noiseHotspots] = useState<NoiseHotspot[]>([]);
+  const [complaints, setComplaints] = useState<CitizenComplaint[]>([]);
+  const [noiseHotspots, setNoiseHotspots] = useState<NoiseHotspot[]>([]);
   const [liveUpdatesEnabled, setLiveUpdatesEnabled] = useState<boolean>(true);
   const [liveTick, setLiveTick] = useState<number>(0);
   const [lastUpdated, setLastUpdated] = useState<string>("Just now");
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (!token || token.startsWith("demo-token-")) {
+      setComplaints(INITIAL_MOCK_COMPLAINTS);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    fetchMyComplaintsApi(token)
+      .then((response) => {
+        if (!mounted) return;
+        const loaded = response.data.complaints.map((complaint) =>
+          backendComplaintToFrontend(complaint, user?.name),
+        );
+        setComplaints(loaded);
+      })
+      .catch((error) => {
+        if (mounted) {
+          console.error("Failed to load complaints:", error);
+          setComplaints([]);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [token, user?.name]);
 
   useEffect(() => {
     let mounted = true;
@@ -259,6 +291,58 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     return match;
   }, [cities, selectedCityId]);
 
+  useEffect(() => {
+    let mounted = true;
+    const city = selectedCity.name;
+
+    fetchCityNoiseCorridors(city).then((response) => {
+      if (!mounted) return;
+      const hotspots: NoiseHotspot[] = response.corridors.map(
+        (corridor, index) => {
+          const angle =
+            (index / Math.max(response.corridors.length, 1)) * Math.PI * 2;
+          const radius = 0.012 + (index % 2) * 0.006;
+          const severity = corridor.severity;
+          return {
+            id: `${city.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-noise-${index}`,
+            name: corridor.name,
+            city,
+            lat: selectedCity.center[0] + Math.cos(angle) * radius,
+            lng: selectedCity.center[1] + Math.sin(angle) * radius,
+            currentDb: Number(corridor.l_eq || 0),
+            peakDb: Number(corridor.l_max || corridor.l_eq || 0),
+            zoneType:
+              corridor.zone === "silence"
+                ? "Silence"
+                : corridor.zone === "industrial"
+                  ? "Industrial"
+                  : corridor.zone === "residential"
+                    ? "Residential"
+                    : "Commercial",
+            standardLimit: Number(corridor.cpcb_limit || 0),
+            violationAmount: Number(corridor.violation || 0),
+            primarySource: "Traffic Congestion",
+            trafficSpeedKmph: Number(corridor.speed_kmph || 0),
+            vehicleDensity:
+              corridor.traffic_flow > 4000
+                ? "Very High"
+                : corridor.traffic_flow > 2500
+                  ? "High"
+                  : "Moderate",
+            aiConfidence: 97,
+            status: severity === "good" ? "Mitigated" : "Active",
+            recentComplaintsCount: 0,
+          };
+        },
+      );
+      setNoiseHotspots(hotspots);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedCity]);
+
   const [selectedPocket, setSelectedPocket] = useState<MicroPocket | null>(
     null,
   );
@@ -329,7 +413,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     return newComplaint;
   };
 
-  const resolveComplaint = (id: string) => {
+  const addPersistedComplaint = (complaint: CitizenComplaint) => {
+    setComplaints((prev) => {
+      const updated = [
+        complaint,
+        ...prev.filter((item) => item.id !== complaint.id),
+      ];
+      try {
+        localStorage.setItem("citizen_complaints", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const resolveComplaint = async (id: string) => {
+    if (token && !token.startsWith("demo-token-")) {
+      await updateComplaintStatusApi(id, "resolved", token);
+    }
+
     setComplaints((prev) => {
       const updated = prev.map((c) =>
         c.id === id
@@ -378,6 +479,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setUserGpsLocation,
         complaints,
         addComplaint,
+        addPersistedComplaint,
         resolveComplaint,
         noiseHotspots,
         liveUpdatesEnabled,

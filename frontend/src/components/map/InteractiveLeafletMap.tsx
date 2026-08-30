@@ -1,11 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import { useApp } from '../../context/AppContext';
-import { useGeolocation } from '../../hooks/useGeolocation';
-import { reverseGeocode, GeocodedLocation } from '../../services/api/geocodingService';
-import { getAqiColor, getAqiCategory, getAqiBadgeStyle, getNoiseBadgeStyle } from '../../utils/helpers';
-import { MicroPocket, NoiseHotspot, CitizenComplaint } from '../../types';
+import React, { useEffect, useState } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Circle,
+  useMap,
+} from "react-leaflet";
+import L from "leaflet";
+import { useApp } from "../../context/AppContext";
+import { useGeolocation } from "../../hooks/useGeolocation";
+import {
+  reverseGeocode,
+  GeocodedLocation,
+} from "../../services/api/geocodingService";
+import {
+  getAqiColor,
+  getAqiCategory,
+  getAqiBadgeStyle,
+  getNoiseBadgeStyle,
+} from "../../utils/helpers";
+import { MicroPocket, NoiseHotspot, CitizenComplaint } from "../../types";
 import {
   AlertTriangle,
   Volume2,
@@ -17,15 +32,22 @@ import {
   AlertCircle,
   Radio,
   MapPin,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface InteractiveLeafletMapProps {
   showAirHotspots: boolean;
   showNoiseHotspots: boolean;
   showComplaints: boolean;
   showUserLocation?: boolean;
-  onSelectHotspot?: (item: MicroPocket | NoiseHotspot | CitizenComplaint) => void;
-  onLocationFound?: (lat: number, lng: number, accuracy: number, placeName: string) => void;
+  onSelectHotspot?: (
+    item: MicroPocket | NoiseHotspot | CitizenComplaint,
+  ) => void;
+  onLocationFound?: (
+    lat: number,
+    lng: number,
+    accuracy: number,
+    placeName: string,
+  ) => void;
 }
 
 // Controller component to smoothly center and zoom when the selected city or user GPS changes
@@ -45,7 +67,7 @@ const MapController: React.FC<{
 const createAirMarkerIcon = (aqi: number) => {
   const color = getAqiColor(aqi);
   return L.divIcon({
-    className: 'custom-leaflet-marker',
+    className: "custom-leaflet-marker",
     html: `
       <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;">
         <span style="position: absolute; width: 100%; height: 100%; border-radius: 9999px; background-color: ${color}; opacity: 0.3; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></span>
@@ -61,9 +83,9 @@ const createAirMarkerIcon = (aqi: number) => {
 };
 
 const createNoiseMarkerIcon = (db: number) => {
-  const color = db > 80 ? '#ef4444' : '#06b6d4';
+  const color = db > 80 ? "#ef4444" : "#06b6d4";
   return L.divIcon({
-    className: 'custom-leaflet-marker',
+    className: "custom-leaflet-marker",
     html: `
       <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;">
         <div style="width: 32px; height: 32px; border-radius: 9999px; background-color: #0f172a; border: 2px solid ${color}; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
@@ -77,13 +99,23 @@ const createNoiseMarkerIcon = (db: number) => {
   });
 };
 
-const createComplaintMarkerIcon = () => {
+const createComplaintMarkerIcon = (
+  severity: "low" | "moderate" | "high" | "critical",
+  count: number,
+) => {
+  const colors = {
+    low: "#22c55e",
+    moderate: "#f59e0b",
+    high: "#f97316",
+    critical: "#ef4444",
+  };
+  const color = colors[severity];
   return L.divIcon({
-    className: 'custom-leaflet-marker',
+    className: "custom-leaflet-marker",
     html: `
       <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;">
-        <div style="width: 24px; height: 24px; border-radius: 6px; background-color: #f59e0b; border: 1.5px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4); transform: rotate(45deg);">
-          <span style="font-size: 10px; font-weight: 900; color: #0f172a; transform: rotate(-45deg);">!</span>
+        <div style="width: 28px; height: 28px; border-radius: 9999px; background-color: ${color}; border: 2px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4);">
+          <span style="font-size: 10px; font-weight: 900; color: #0f172a;">${count}</span>
         </div>
       </div>
     `,
@@ -93,10 +125,24 @@ const createComplaintMarkerIcon = () => {
   });
 };
 
+const distanceMeters = (a: CitizenComplaint, b: CitizenComplaint) => {
+  const latScale = 111_320;
+  const lonScale = 111_320 * Math.cos((a.lat * Math.PI) / 180);
+  return Math.hypot((a.lat - b.lat) * latScale, (a.lng - b.lng) * lonScale);
+};
+
+const getComplaintSeverity = (activeCount: number, totalCount: number) => {
+  const score = activeCount * 2 + Math.max(0, totalCount - activeCount) * 0.5;
+  if (score >= 12) return "critical" as const;
+  if (score >= 7) return "high" as const;
+  if (score >= 3) return "moderate" as const;
+  return "low" as const;
+};
+
 // Pulsing Blue Radar Dot for User's Real Device GPS Position
 const createMyLocationIcon = () => {
   return L.divIcon({
-    className: 'custom-leaflet-marker',
+    className: "custom-leaflet-marker",
     html: `
       <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px;">
         <span style="position: absolute; width: 100%; height: 100%; border-radius: 9999px; background-color: #3b82f6; opacity: 0.4; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></span>
@@ -119,14 +165,26 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
   onSelectHotspot,
   onLocationFound,
 }) => {
-  const { selectedCity, setSelectedCityId, setUserGpsLocation, noiseHotspots, complaints } = useApp();
+  const {
+    selectedCity,
+    setSelectedCityId,
+    setUserGpsLocation,
+    noiseHotspots,
+    complaints,
+  } = useApp();
   const geo = useGeolocation(false);
 
-  const [activeCenter, setActiveCenter] = useState<[number, number]>(selectedCity.center);
+  const [activeCenter, setActiveCenter] = useState<[number, number]>(
+    selectedCity.center,
+  );
   const [activeZoom, setActiveZoom] = useState<number>(selectedCity.zoom);
   const [flyTrigger, setFlyTrigger] = useState<number>(0);
-  const [locationStatusMessage, setLocationStatusMessage] = useState<string | null>(null);
-  const [geocodedPlace, setGeocodedPlace] = useState<GeocodedLocation | null>(null);
+  const [locationStatusMessage, setLocationStatusMessage] = useState<
+    string | null
+  >(null);
+  const [geocodedPlace, setGeocodedPlace] = useState<GeocodedLocation | null>(
+    null,
+  );
 
   // Sync with city selector changes
   useEffect(() => {
@@ -137,7 +195,7 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
 
   // Handle GPS button click
   const handleLocateMe = async () => {
-    setLocationStatusMessage('Acquiring high-accuracy GPS satellite fix...');
+    setLocationStatusMessage("Acquiring high-accuracy GPS satellite fix...");
     try {
       const pos = await geo.getPosition();
       // Ensure latitude is index 0, longitude is index 1
@@ -163,7 +221,7 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
       }
 
       setLocationStatusMessage(
-        `GPS Locked: ${geoInfo.displayName} (±${Math.round(pos.accuracy)}m)`
+        `GPS Locked: ${geoInfo.displayName} (±${Math.round(pos.accuracy)}m)`,
       );
 
       onLocationFound?.(pos.lat, pos.lng, pos.accuracy, geoInfo.displayName);
@@ -173,7 +231,9 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
         setLocationStatusMessage(null);
       }, 7000);
     } catch (err: any) {
-      setLocationStatusMessage(err.message || 'Location error. Please check browser permissions.');
+      setLocationStatusMessage(
+        err.message || "Location error. Please check browser permissions.",
+      );
       setTimeout(() => {
         setLocationStatusMessage(null);
       }, 7000);
@@ -183,13 +243,41 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
   const cityComplaints = complaints.filter(
     (c) =>
       c.city.toLowerCase() === selectedCity.name.toLowerCase() ||
-      c.city.includes(selectedCity.name.split(' ')[0])
+      c.city.includes(selectedCity.name.split(" ")[0]),
   );
+
+  const complaintClusters = cityComplaints.reduce<
+    Array<{
+      complaints: CitizenComplaint[];
+      lat: number;
+      lng: number;
+    }>
+  >((clusters, complaint) => {
+    const cluster = clusters.find(
+      (candidate) => distanceMeters(candidate.complaints[0], complaint) <= 250,
+    );
+    if (cluster) {
+      cluster.complaints.push(complaint);
+      cluster.lat =
+        cluster.complaints.reduce((sum, item) => sum + item.lat, 0) /
+        cluster.complaints.length;
+      cluster.lng =
+        cluster.complaints.reduce((sum, item) => sum + item.lng, 0) /
+        cluster.complaints.length;
+    } else {
+      clusters.push({
+        complaints: [complaint],
+        lat: complaint.lat,
+        lng: complaint.lng,
+      });
+    }
+    return clusters;
+  }, []);
 
   const cityNoiseHotspots = noiseHotspots.filter(
     (h) =>
       h.city.toLowerCase() === selectedCity.name.toLowerCase() ||
-      h.city.includes(selectedCity.name.split(' ')[0])
+      h.city.includes(selectedCity.name.split(" ")[0]),
   );
 
   return (
@@ -202,8 +290,8 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
           disabled={geo.isLoading}
           className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-2xl font-bold text-xs shadow-xl backdrop-blur-md transition-all duration-200 border ${
             geo.lat !== null && geo.lng !== null
-              ? 'bg-blue-600 hover:bg-blue-500 text-white border-blue-400/50 shadow-blue-500/25'
-              : 'bg-white/95 dark:bg-slate-900/90 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+              ? "bg-blue-600 hover:bg-blue-500 text-white border-blue-400/50 shadow-blue-500/25"
+              : "bg-white/95 dark:bg-slate-900/90 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
           }`}
           title="Center on current device GPS location"
         >
@@ -215,11 +303,13 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
           ) : (
             <>
               <Crosshair
-                className={`w-4 h-4 ${geo.lat !== null ? 'text-white' : 'text-blue-500'} ${
-                  geo.isLoading ? 'animate-spin' : ''
+                className={`w-4 h-4 ${geo.lat !== null ? "text-white" : "text-blue-500"} ${
+                  geo.isLoading ? "animate-spin" : ""
                 }`}
               />
-              <span>{geo.lat !== null ? 'My GPS Position' : 'Locate Me (GPS)'}</span>
+              <span>
+                {geo.lat !== null ? "My GPS Position" : "Locate Me (GPS)"}
+              </span>
             </>
           )}
         </button>
@@ -238,9 +328,13 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
         zoom={activeZoom}
         scrollWheelZoom={true}
         className="w-full h-full z-0"
-        style={{ minHeight: '520px', background: '#090d16' }}
+        style={{ minHeight: "520px", background: "#090d16" }}
       >
-        <MapController center={activeCenter} zoom={activeZoom} flyTrigger={flyTrigger} />
+        <MapController
+          center={activeCenter}
+          zoom={activeZoom}
+          flyTrigger={flyTrigger}
+        />
 
         {/* Modern CartoDB Voyager tiles */}
         <TileLayer
@@ -257,41 +351,57 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
                 center={[geo.lat, geo.lng]}
                 radius={Math.min(geo.accuracy, 500)} // Bound visual radius to 500m
                 pathOptions={{
-                  fillColor: '#3b82f6',
+                  fillColor: "#3b82f6",
                   fillOpacity: 0.15,
-                  color: '#2563eb',
+                  color: "#2563eb",
                   weight: 1.5,
-                  dashArray: '3, 6',
+                  dashArray: "3, 6",
                 }}
               />
             )}
 
-            <Marker position={[geo.lat, geo.lng]} icon={createMyLocationIcon()} zIndexOffset={1000}>
+            <Marker
+              position={[geo.lat, geo.lng]}
+              icon={createMyLocationIcon()}
+              zIndexOffset={1000}
+            >
               <Popup>
                 <div className="p-3 text-slate-900 text-xs min-w-[240px]">
                   <div className="flex items-center space-x-2 border-b pb-1.5 mb-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping" />
-                    <span className="font-black text-sm text-blue-700">Your Real GPS Location</span>
+                    <span className="font-black text-sm text-blue-700">
+                      Your Real GPS Location
+                    </span>
                   </div>
                   <div className="space-y-1.5 text-[11px]">
                     <div>
-                      <span className="text-slate-500 block text-[10px] uppercase font-bold">Detected Place:</span>
+                      <span className="text-slate-500 block text-[10px] uppercase font-bold">
+                        Detected Place:
+                      </span>
                       <span className="font-extrabold text-slate-900 text-xs">
-                        {geocodedPlace ? geocodedPlace.displayName : 'Live GPS Satellite Fix'}
+                        {geocodedPlace
+                          ? geocodedPlace.displayName
+                          : "Live GPS Satellite Fix"}
                       </span>
                     </div>
                     <div className="flex justify-between pt-1 border-t">
                       <span className="text-slate-600">Latitude:</span>
-                      <span className="font-mono font-bold text-slate-900">{geo.lat.toFixed(6)}°N</span>
+                      <span className="font-mono font-bold text-slate-900">
+                        {geo.lat.toFixed(6)}°N
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-600">Longitude:</span>
-                      <span className="font-mono font-bold text-slate-900">{geo.lng.toFixed(6)}°E</span>
+                      <span className="font-mono font-bold text-slate-900">
+                        {geo.lng.toFixed(6)}°E
+                      </span>
                     </div>
                     {geo.accuracy && (
                       <div className="flex justify-between">
                         <span className="text-slate-600">GPS Accuracy:</span>
-                        <span className="font-bold text-emerald-700">±{Math.round(geo.accuracy)} meters</span>
+                        <span className="font-bold text-emerald-700">
+                          ±{Math.round(geo.accuracy)} meters
+                        </span>
                       </div>
                     )}
                   </div>
@@ -317,7 +427,7 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
                     fillOpacity: pocket.isHotspot ? 0.25 : 0.12,
                     color: aqiColor,
                     weight: pocket.isHotspot ? 2 : 1,
-                    dashArray: pocket.isHotspot ? '4, 4' : undefined,
+                    dashArray: pocket.isHotspot ? "4, 4" : undefined,
                   }}
                 />
 
@@ -332,24 +442,33 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
                     <div className="p-3 text-slate-900 text-xs min-w-[220px]">
                       <div className="flex items-center justify-between font-bold border-b pb-1 mb-2">
                         <span className="text-sm">{pocket.name}</span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${badge.bg} ${badge.text}`}>
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded font-bold ${badge.bg} ${badge.text}`}
+                        >
                           {pocket.category}
                         </span>
                       </div>
                       <div className="space-y-1">
                         <div className="flex justify-between">
                           <span className="text-slate-600">AQI Index:</span>
-                          <span className="font-extrabold" style={{ color: aqiColor }}>
+                          <span
+                            className="font-extrabold"
+                            style={{ color: aqiColor }}
+                          >
                             {pocket.aqi}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-600">Primary:</span>
-                          <span className="font-mono font-bold">{pocket.dominantPollutant}</span>
+                          <span className="font-mono font-bold">
+                            {pocket.dominantPollutant}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-600">Noise Est:</span>
-                          <span className="font-mono font-bold text-cyan-700">{pocket.noiseDb} dB</span>
+                          <span className="font-mono font-bold text-cyan-700">
+                            {pocket.noiseDb} dB
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-600">CPCB Station:</span>
@@ -372,9 +491,9 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
                   center={[hotspot.lat, hotspot.lng]}
                   radius={1100}
                   pathOptions={{
-                    fillColor: '#06b6d4',
+                    fillColor: "#06b6d4",
                     fillOpacity: 0.18,
-                    color: '#06b6d4',
+                    color: "#06b6d4",
                     weight: 1.5,
                   }}
                 />
@@ -397,19 +516,29 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
                       <div className="space-y-1">
                         <div className="flex justify-between">
                           <span className="text-slate-600">Noise Level:</span>
-                          <span className="font-extrabold text-cyan-700">{hotspot.currentDb} dB(A)</span>
+                          <span className="font-extrabold text-cyan-700">
+                            {hotspot.currentDb} dB(A)
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-600">Peak Recorded:</span>
-                          <span className="font-bold text-rose-600">{hotspot.peakDb} dB(A)</span>
+                          <span className="font-bold text-rose-600">
+                            {hotspot.peakDb} dB(A)
+                          </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-600">Primary Source:</span>
-                          <span className="font-medium text-slate-800">{hotspot.primarySource}</span>
+                          <span className="text-slate-600">
+                            Primary Source:
+                          </span>
+                          <span className="font-medium text-slate-800">
+                            {hotspot.primarySource}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-600">Traffic Speed:</span>
-                          <span className="font-mono">{hotspot.trafficSpeedKmph} km/h</span>
+                          <span className="font-mono">
+                            {hotspot.trafficSpeedKmph} km/h
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -421,47 +550,63 @@ export const InteractiveLeafletMap: React.FC<InteractiveLeafletMapProps> = ({
 
         {/* 3. Citizen Complaints */}
         {showComplaints &&
-          cityComplaints.map((complaint) => (
-            <Marker
-              key={complaint.id}
-              position={[complaint.lat, complaint.lng]}
-              icon={createComplaintMarkerIcon()}
-              eventHandlers={{
-                click: () => onSelectHotspot?.(complaint),
-              }}
-            >
-              <Popup>
-                <div className="p-3 text-slate-900 text-xs min-w-[230px]">
-                  <div className="flex items-center justify-between font-bold border-b pb-1 mb-2">
-                    <span className="text-xs font-bold text-slate-800">{complaint.trackingNumber}</span>
-                    <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold uppercase">
-                      {complaint.type}
-                    </span>
-                  </div>
-                  <h4 className="font-bold text-slate-900 text-sm mb-1">{complaint.title}</h4>
-                  <p className="text-[11px] text-slate-600 mb-2 leading-tight line-clamp-2">
-                    {complaint.description}
-                  </p>
-                  <div className="space-y-0.5 border-t pt-1.5 text-[11px]">
-                    <div className="flex justify-between text-slate-700">
-                      <span>Reported By:</span>
-                      <span className="font-semibold">{complaint.citizenName}</span>
-                    </div>
-                    <div className="flex justify-between text-slate-700">
-                      <span>AI Verification:</span>
-                      <span className="font-bold text-emerald-700">
-                        {complaint.aiVerification.confidence}% Verified
+          complaintClusters.map((cluster) => {
+            const complaint = cluster.complaints[0];
+            const activeCount = cluster.complaints.filter(
+              (item) => item.status !== "Resolved",
+            ).length;
+            const totalCount = cluster.complaints.length;
+            const severity = getComplaintSeverity(activeCount, totalCount);
+            return (
+              <Marker
+                key={complaint.id}
+                position={[cluster.lat, cluster.lng]}
+                icon={createComplaintMarkerIcon(severity, totalCount)}
+                eventHandlers={{
+                  click: () => onSelectHotspot?.(complaint),
+                }}
+              >
+                <Popup>
+                  <div className="p-3 text-slate-900 text-xs min-w-[230px]">
+                    <div className="flex items-center justify-between font-bold border-b pb-1 mb-2">
+                      <span className="text-xs font-bold text-slate-800">
+                        {complaint.trackingNumber}
+                      </span>
+                      <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold uppercase">
+                        {severity} · {totalCount} reports
                       </span>
                     </div>
-                    <div className="flex justify-between text-slate-700">
-                      <span>Status:</span>
-                      <span className="font-bold text-teal-700">{complaint.status}</span>
+                    <h4 className="font-bold text-slate-900 text-sm mb-1">
+                      {complaint.title}
+                    </h4>
+                    <p className="text-[11px] text-slate-600 mb-2 leading-tight line-clamp-2">
+                      {complaint.description}
+                    </p>
+                    <div className="space-y-0.5 border-t pt-1.5 text-[11px]">
+                      <div className="flex justify-between text-slate-700">
+                        <span>Reported By:</span>
+                        <span className="font-semibold">
+                          {complaint.citizenName}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-700">
+                        <span>AI Verification:</span>
+                        <span className="font-bold text-emerald-700">
+                          {complaint.aiVerification.confidence}% Verified
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-700">
+                        <span>Location load:</span>
+                        <span className="font-bold text-rose-700">
+                          {activeCount} active / {totalCount} registered
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+                </Popup>
+              </Marker>
+            );
+          })}
       </MapContainer>
     </div>
   );

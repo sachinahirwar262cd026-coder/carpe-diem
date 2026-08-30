@@ -17,27 +17,30 @@ export const AirQualityPage: React.FC = () => {
   const [liveForecast, setLiveForecast] = useState<ForecastResponse | null>(
     null,
   );
+  const [forecastError, setForecastError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
+    setForecastError(null);
     fetchForecast(selectedCity.name)
       .then((res) => {
         if (isMounted) setLiveForecast(res);
       })
-      .catch(() => {});
+      .catch((error: Error) => {
+        if (isMounted) setForecastError(error.message);
+      });
     return () => {
       isMounted = false;
     };
   }, [selectedCity.name]);
 
-  const currentAqi = selectedPocket
-    ? selectedPocket.aqi
-    : (liveForecast?.current?.cpcb_aqi ?? selectedCity?.currentAqi ?? 0);
-  const currentCategory = (
-    selectedPocket
+  const currentAqi =
+    liveForecast?.current?.cpcb_aqi ??
+    (selectedPocket?.aqi || selectedCity?.currentAqi || 0);
+  const currentCategory = ((liveForecast?.current?.category as any) ??
+    (selectedPocket?.aqi
       ? selectedPocket.category
-      : ((liveForecast?.current?.category as any) ?? getAqiCategory(currentAqi))
-  ) as any;
+      : getAqiCategory(currentAqi))) as any;
   const badgeStyle = getAqiBadgeStyle(currentCategory as any);
 
   const formattedHourlyForecast = (liveForecast?.hourly_forecast ?? []).map(
@@ -62,6 +65,11 @@ export const AirQualityPage: React.FC = () => {
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* Page Header */}
+      {forecastError && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300">
+          Air quality service unavailable: {forecastError}
+        </div>
+      )}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
           <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-teal-400">

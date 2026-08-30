@@ -32,7 +32,9 @@ export const AqiHeroCard: React.FC<AqiHeroCardProps> = ({
   const primaryPollutant =
     prominentPollutant ??
     (pocket ? pocket.dominantPollutant : city.primaryPollutant);
-  const badgeStyle = getAqiBadgeStyle(getAqiCategory(currentAqi));
+  const badgeStyle = getAqiBadgeStyle(
+    (currentCategory || getAqiCategory(currentAqi)) as any,
+  );
 
   return (
     <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xs transition">

@@ -1,18 +1,18 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
-import { AuthProvider } from './context/AuthContext';
-import { AppLayout } from './components/layout/AppLayout';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { AirEvidencePage } from './pages/citizen/AirEvidencePage';
-import { NoiseEvidencePage } from './pages/citizen/NoiseEvidencePage';
-import { HotspotMapPage } from './pages/HotspotMapPage';
-import { SubmitComplaintPage } from './pages/SubmitComplaintPage';
-import { AiReportsPage } from './pages/AiReportsPage';
-import { NotFoundPage } from './pages/NotFoundPage';
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AppProvider } from "./context/AppContext";
+import { AuthProvider } from "./context/AuthContext";
+import { AppLayout } from "./components/layout/AppLayout";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { AirEvidencePage } from "./pages/citizen/AirEvidencePage";
+import { NoiseEvidencePage } from "./pages/citizen/NoiseEvidencePage";
+import { HotspotMapPage } from "./pages/HotspotMapPage";
+import { SubmitComplaintPage } from "./pages/SubmitComplaintPage";
+import { AiReportsPage } from "./pages/AiReportsPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 export const App: React.FC = () => {
   return (
@@ -44,8 +44,14 @@ export const App: React.FC = () => {
               <Route path="reports" element={<AiReportsPage />} />
 
               {/* Sub-Routes */}
-              <Route path="citizen/air-evidence" element={<AirEvidencePage />} />
-              <Route path="citizen/noise-evidence" element={<NoiseEvidencePage />} />
+              <Route
+                path="citizen/air-evidence"
+                element={<AirEvidencePage />}
+              />
+              <Route
+                path="citizen/noise-evidence"
+                element={<NoiseEvidencePage />}
+              />
 
               {/* Legacy / Redundant Redirects */}
               <Route path="citizen" element={<Navigate to="/" replace />} />
