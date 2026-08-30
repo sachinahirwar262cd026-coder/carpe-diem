@@ -1,4 +1,4 @@
-import cloudinary from "../config/cloudinary";
+import cloudinary from "../config/cloudinary.js";
 
 /**
  * Uploads a buffer (e.g. req.file.buffer from multer memoryStorage) to Cloudinary.

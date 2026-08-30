@@ -16,17 +16,32 @@ const NOISE_COMPLAINT_MODEL_URL = process.env.NOISE_COMPLAINT_MODEL_URL;
  * @returns {Promise<Object>} model response (AQI current/forecast, noise estimate, etc.)
  */
 const getPollutionPrediction = async (latitude, longitude) => {
-  const response = await fetch(POLLUTION_MODEL_URL, {
+    const response = await fetch(POLLUTION_MODEL_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ latitude, longitude }),
-  });
+    headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+    },
+    body: JSON.stringify({ latitude, longitude, lat: latitude, lon: longitude }),
+    });
+
 
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Pollution model request failed (${response.status}): ${errorText}`);
   }
 
+  return response.json();
+};
+
+// src/services/mlService.js - add alongside getPollutionPrediction
+const getNoisePrediction = async (latitude, longitude) => {
+  const response = await fetch(process.env.NOISE_FORECAST_MODEL_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ lat: latitude, lon: longitude }),
+  });
+  if (!response.ok) throw new Error(`Noise model request failed (${response.status})`);
   return response.json();
 };
 
@@ -55,5 +70,5 @@ const getNoiseComplaintAnalysis = async (imageUrl, location) => {
 
   return response.json();
 };
-
-export default { getPollutionPrediction, getNoiseComplaintAnalysis };
+export { getPollutionPrediction, getNoiseComplaintAnalysis, getNoisePrediction };
+// export default { getPollutionPrediction, getNoiseComplaintAnalysis, getNoisePrediction };

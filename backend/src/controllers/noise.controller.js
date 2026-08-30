@@ -1,11 +1,11 @@
-import asyncHandler from "../utils/asynchandlers.util.js";
+import asyncHandler from "../utils/asyncHandler.js";
 import User from "../models/user.model.js";
-import { getPollutionPrediction } from "../services/ml.service.js";
+import { getNoisePrediction } from "../services/ml.service.js";
 
-// @route   POST /api/pollution/predict
+//  @route   POST /api/noise/predict
 // @access  Private
 // @body    { latitude: Number, longitude: Number }
-const predictPollution = asyncHandler(async (req, res) => {
+const predictNoise = asyncHandler(async (req, res) => {
   const { latitude, longitude } = req.body;
 
   if (latitude === undefined || longitude === undefined) {
@@ -28,13 +28,12 @@ const predictPollution = asyncHandler(async (req, res) => {
     lastKnownLocation: { latitude, longitude, updatedAt: new Date() },
   });
 
-  const prediction = await getPollutionPrediction(latitude, longitude);
+  const prediction = await getNoisePrediction(latitude, longitude);
 
   res.status(200).json({
     success: true,
     data: prediction,
   });
 });
-export { predictPollution };
-// export default { predictPollution };
 
+export default { predictNoise };

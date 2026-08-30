@@ -64,4 +64,5 @@ const getMyComplaints = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: { complaints } });
 });
 
-export default { createComplaint, getMyComplaints };
+export { createComplaint, getMyComplaints };
+// export default { createComplaint, getMyComplaints };

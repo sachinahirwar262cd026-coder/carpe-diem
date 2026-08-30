@@ -1,7 +1,7 @@
 import express from "express";
 import authRoutes from "./routes/auth.route.js"
-import complaintRoutes from "./routes/complaint.route.js"
 import cookieParser from "cookie-parser";
+import pollutionRoutes from "./routes/pollution.route.js";
 
 const app = express();
 
@@ -12,7 +12,8 @@ app.use(cookieParser());
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/complaints", complaintRoutes);
+// app.use("/api/complaints", complaintRoutes);
+app.use("/api/pollution", pollutionRoutes);
 
 
 // 404 + error handling 
